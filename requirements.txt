@@ -20,7 +20,10 @@ weasyprint==57.2
 xhtml2pdf==0.2.11
 webencodings==0.5.1
 zopfli==0.2.2
-whitenoise
+whitenoise==6.6.0
 python-barcode==0.15.1
 qrcode==7.4.2
 reportlab>=3.5.59,<4.0
+python-decouple==3.8
+mysqlclient==2.2.0
+gunicorn==21.2.0
