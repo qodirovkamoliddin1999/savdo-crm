@@ -1,0 +1,184 @@
+{% extends "pos/base.html" %}
+
+{% block title %}{{organization.short_name}} - Tafsilotlar{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Tashkilot tafsilotlari{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:organizations_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+    <a href="{% url 'organizations:organizations_update' organization.id %}" class="ml-2">
+        <button type="button" class="btn btn-warning font-weight-bold">
+            <i class="fas fa-edit mr-2"></i>
+            Tahrirlash
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Asosiy ma'lumotlar -->
+    <div class="col-md-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-building mr-2"></i>{{organization.short_name}}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h5 class="text-primary"><i class="fas fa-info-circle mr-2"></i>Asosiy ma'lumotlar</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>To'liq nomi:</strong><br>{{organization.name}}</p>
+                        <p><strong>Qisqacha nomi:</strong><br>{{organization.short_name}}</p>
+                        <p><strong>Tashkilot turi:</strong><br>{{organization.get_organization_type_display}}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Holati:</strong><br>
+                            {% if organization.is_active %}
+                            <span class="badge badge-success">Faol</span>
+                            {% else %}
+                            <span class="badge badge-danger">Nofaol</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Yaratilgan:</strong><br>{{organization.created_date|date:"d.m.Y H:i"}}</p>
+                        <p><strong>Yangilangan:</strong><br>{{organization.updated_date|date:"d.m.Y H:i"}}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h5 class="text-primary"><i class="fas fa-file-alt mr-2"></i>Rasmiy ma'lumotlar</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>INN:</strong> {{organization.inn}}</p>
+                        <p><strong>OKED:</strong> {{organization.oked|default:"—"}}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>MFO:</strong> {{organization.mfo|default:"—"}}</p>
+                        <p><strong>Hisob raqam:</strong> {{organization.account_number|default:"—"}}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h5 class="text-primary"><i class="fas fa-map-marker-alt mr-2"></i>Manzil va aloqa</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Yuridik manzil:</strong><br>{{organization.legal_address}}</p>
+                        {% if organization.actual_address %}
+                        <p><strong>Haqiqiy manzil:</strong><br>{{organization.actual_address}}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Telefon:</strong><br>{{organization.phone}}</p>
+                        {% if organization.email %}
+                        <p><strong>Email:</strong><br>{{organization.email}}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <h5 class="text-primary"><i class="fas fa-user-tie mr-2"></i>Mas'ul shaxslar</h5>
+                        <hr>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Direktor:</strong><br>{{organization.director_name}}</p>
+                        {% if organization.director_phone %}
+                        <p><strong>Direktor telefoni:</strong><br>{{organization.director_phone}}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Mas'ul shaxs:</strong><br>{{organization.responsible_person}}</p>
+                        {% if organization.responsible_position %}
+                        <p><strong>Lavozimi:</strong><br>{{organization.responsible_position}}</p>
+                        {% endif %}
+                        {% if organization.responsible_phone %}
+                        <p><strong>Telefoni:</strong><br>{{organization.responsible_phone}}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if organization.notes %}
+                <div class="row">
+                    <div class="col-md-12">
+                        <h5 class="text-primary"><i class="fas fa-sticky-note mr-2"></i>Izohlar</h5>
+                        <hr>
+                        <p>{{organization.notes}}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Shartnomalar -->
+    <div class="col-md-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-file-contract mr-2"></i>Shartnomalar
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if contracts %}
+                <div class="list-group">
+                    {% for contract in contracts %}
+                    <a href="{% url 'organizations:contracts_detail' contract.id %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">№{{contract.number}}</h6>
+                            {% if contract.status == 'ACTIVE' %}
+                            <small class="badge badge-success">Faol</small>
+                            {% elif contract.status == 'EXPIRED' %}
+                            <small class="badge badge-warning">Tugagan</small>
+                            {% else %}
+                            <small class="badge badge-danger">Bekor qilingan</small>
+                            {% endif %}
+                        </div>
+                        <p class="mb-1"><small>{{contract.contract_date|date:"d.m.Y"}}</small></p>
+                        <small>{{contract.start_date|date:"d.m.Y"}} - {{contract.end_date|date:"d.m.Y"}}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'organizations:contracts_add' %}" class="btn btn-sm btn-success btn-block mt-3">
+                    <i class="fas fa-plus mr-2"></i>Yangi shartnoma
+                </a>
+                {% else %}
+                <p class="text-center text-muted">Shartnomalar yo'q</p>
+                <a href="{% url 'organizations:contracts_add' %}" class="btn btn-sm btn-success btn-block">
+                    <i class="fas fa-plus mr-2"></i>Birinchi shartnoma
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistika -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-bar mr-2"></i>Statistika
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Shartnomalar:</strong> {{contracts.count}} ta</p>
+                <p><strong>Faol shartnomalar:</strong> {{contracts|length}} ta</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

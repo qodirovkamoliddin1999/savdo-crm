@@ -1,0 +1,250 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+<!-- Page title  -->
+{% block title %}Qarz daftari{% endblock title %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<!-- Datatables -->
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+<!--Select2 CSS-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
+<!-- Datepicker -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+{% endblock stylesheets %}
+
+<!-- Page Heading -->
+{% block heading %}Qarz daftari{% endblock heading %}
+
+<!-- Page content  -->
+{% block content %}
+
+<!-- Statistika kartalari -->
+<div class="row mb-4">
+    <!-- Umumiy qarz -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Umumiy qarz</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_debt|floatformat:2 }} $</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-money-bill-wave fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Muddati o'tgan qarz -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Muddati o'tgan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ overdue_debt|floatformat:2 }} $</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- To'lanmagan -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            To'lanmagan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% for stat in status_stats %}
+                                {% if stat.payment_status == 'UNPAID' %}{{ stat.count }}{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- To'liq to'langan -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            To'liq to'langan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% for stat in status_stats %}
+                                {% if stat.payment_status == 'PAID' %}{{ stat.count }}{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tezkor amallar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-tachometer-alt mr-2"></i>Tezkor amallar
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'debt:debt_add' %}" class="btn btn-success btn-block font-weight-bold">
+                            <i class="fas fa-plus mr-2"></i>Yangi qarz
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'debt:debt_list' %}" class="btn btn-primary btn-block font-weight-bold">
+                            <i class="fas fa-list mr-2"></i>Barcha qarzlar
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-warning btn-block font-weight-bold" id="overdueBtn">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Muddati o'tganlar
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-info btn-block font-weight-bold" id="refreshStats">
+                            <i class="fas fa-sync mr-2"></i>Statistikani yangilash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Oxirgi qarz yozuvlari -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history mr-2"></i>Oxirgi qarz yozuvlari
+                </h6>
+                <a href="{% url 'debt:debt_list' %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-arrow-right mr-1"></i>Barchasini ko'rish
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>Tashkilot</th>
+                                <th>Mahsulot/Ish</th>
+                                <th>Umumiy summa</th>
+                                <th>To'langan</th>
+                                <th>Qolgan</th>
+                                <th>Status</th>
+                                <th>Sana</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for debt in recent_debts %}
+                            <tr>
+                                <td>{{ debt.organization.name }}</td>
+                                <td>{{ debt.product_or_service }}</td>
+                                <td class="text-right">{{ debt.total_amount|floatformat:2 }} $</td>
+                                <td class="text-right">{{ debt.paid_amount|floatformat:2 }} $</td>
+                                <td class="text-right font-weight-bold {{ debt.status_color }}">
+                                    {{ debt.remaining_amount|floatformat:2 }} $
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-{{ debt.status_badge_class }}">
+                                        {{ debt.get_payment_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ debt.date|date:"d.m.Y" }}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'debt:debt_detail' debt.id %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <p>Hozircha qarz yozuvlari yo'q</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<!-- jQuery -->
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- Core plugin JavaScript-->
+<script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<!-- Custom scripts for all pages-->
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+<!-- Select2 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Datepicker JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Muddati o'tganlarni ko'rsatish
+    $('#overdueBtn').click(function() {
+        window.location.href = "{% url 'debt:debt_list' %}?overdue_only=true";
+    });
+    
+    // Statistikani yangilash
+    $('#refreshStats').click(function() {
+        $.ajax({
+            url: "{% url 'debt:ajax_statistics' %}",
+            type: "GET",
+            success: function(response) {
+                // Statistikani yangilash
+                location.reload();
+            },
+            error: function(error) {
+                console.log("Statistics refresh error:", error);
+                alert('Statistikani yangilashda xatolik yuz berdi!');
+            }
+        });
+    });
+});
+</script>
+{% endblock javascripts %}

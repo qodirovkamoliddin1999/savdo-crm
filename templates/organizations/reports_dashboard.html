@@ -1,0 +1,256 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+{% block title %}Hisobotlar{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Hisobotlar Dashboard{% endblock heading %}
+
+{% block content %}
+
+<!-- Statistika kartochkalari -->
+<div class="row">
+    <!-- Tashkilotlar -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Tashkilotlar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_organizations}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-building fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shartnomalar -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Faol shartnomalar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_contracts}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-contract fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yuk xatlari -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            Yuk xatlari</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_delivery_notes}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mahsulotlar -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Mahsulotlar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_products}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Moliyaviy statistika -->
+<div class="row">
+    <div class="col-xl-8 col-lg-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Moliyaviy ko'rsatkichlar</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 text-center mb-3">
+                        <h6 class="text-muted">Umumiy savdo</h6>
+                        <h3 class="text-primary">{{total_sales|floatformat:0}} so'm</h3>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <h6 class="text-muted">To'langan</h6>
+                        <h3 class="text-success">{{total_paid|floatformat:0}} so'm</h3>
+                    </div>
+                    <div class="col-md-4 text-center mb-3">
+                        <h6 class="text-muted">Qarz</h6>
+                        <h3 class="text-danger">{{total_debt|floatformat:0}} so'm</h3>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-md-4 text-center">
+                        <span class="badge badge-danger" style="font-size:1em;">To'lanmagan: {{unpaid_count}}</span>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <span class="badge badge-warning" style="font-size:1em;">Qisman: {{partial_count}}</span>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <span class="badge badge-success" style="font-size:1em;">To'langan: {{paid_count}}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4 col-lg-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Oxirgi 30 kun</h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h6 class="text-muted">Yuk xatlari</h6>
+                    <h3 class="text-info">{{recent_delivery_notes}}</h3>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <h6 class="text-muted">Savdo hajmi</h6>
+                    <h3 class="text-success">{{recent_sales|floatformat:0}} so'm</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tashkilotlar va Ombor -->
+<div class="row">
+    <!-- Top tashkilotlar -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Eng faol tashkilotlar</h6>
+            </div>
+            <div class="card-body">
+                {% if top_organizations %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tashkilot</th>
+                            <th class="text-center">Yuk xatlari</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for org in top_organizations %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>
+                                <a href="{% url 'organizations:organizations_detail' org.id %}">
+                                    {{org.short_name}}
+                                </a>
+                            </td>
+                            <td class="text-center"><span class="badge badge-primary">{{org.dn_count}}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-muted">Ma'lumot yo'q</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Kam qolgan mahsulotlar -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">⚠️ Kam qolgan mahsulotlar</h6>
+            </div>
+            <div class="card-body">
+                {% if low_stock_products %}
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Mahsulot</th>
+                            <th class="text-center">Qoldi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in low_stock_products %}
+                        <tr>
+                            <td>{{product.name}}</td>
+                            <td class="text-center">
+                                {% if product.quantity == 0 %}
+                                <span class="badge badge-danger">{{product.quantity}}</span>
+                                {% elif product.quantity <= 5 %}
+                                <span class="badge badge-warning">{{product.quantity}}</span>
+                                {% else %}
+                                <span class="badge badge-info">{{product.quantity}}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <p class="text-center text-success">Barcha mahsulotlar yetarli miqdorda!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tezkor havolalar -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Batafsil hisobotlar</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'organizations:reports_inventory' %}" class="btn btn-primary btn-block">
+                            <i class="fas fa-warehouse mr-2"></i>Ombor hisoboti
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'organizations:reports_sales' %}" class="btn btn-success btn-block">
+                            <i class="fas fa-chart-line mr-2"></i>Savdo hisoboti
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'organizations:delivery_notes_list' %}" class="btn btn-info btn-block">
+                            <i class="fas fa-file-alt mr-2"></i>Yuk xatlari
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

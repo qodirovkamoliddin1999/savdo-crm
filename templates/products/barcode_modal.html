@@ -1,0 +1,233 @@
+<!-- Barcode Modal -->
+<div class="modal fade" id="barcodeModal" tabindex="-1" role="dialog" aria-labelledby="barcodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="barcodeModalLabel">
+                    <i class="fas fa-barcode mr-2"></i>Barcode Sticker Chop Etish
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="container-fluid">
+                    <!-- Mahsulot ma'lumotlari -->
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="font-weight-bold mb-3">Mahsulot ma'lumotlari:</h6>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <p class="mb-1"><strong>Nomi:</strong> <span id="modal-product-name"></span></p>
+                                            <p class="mb-1"><strong>Barcode:</strong> <code id="modal-product-barcode"></code></p>
+                                            <p class="mb-1"><strong>Narxi:</strong> <span id="modal-product-price"></span> so'm</p>
+                                        </div>
+                                        <div class="col-md-4 text-center" id="modal-product-image-container">
+                                            <!-- Mahsulot rasmi bu yerda -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Barcode generatsiya variantlari -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <h6 class="font-weight-bold">Nechta sticker kerak?</h6>
+                            <div class="input-group">
+                                <input type="number" class="form-control form-control-lg" id="barcode-quantity" value="1" min="1" max="500">
+                                <div class="input-group-append">
+                                    <span class="input-group-text">dona</span>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">Maksimal 500 ta sticker yaratishingiz mumkin</small>
+                        </div>
+                    </div>
+
+                    <!-- Tez tugmalar -->
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="font-weight-bold mb-2">Tez tanlash:</h6>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" onclick="setBarcodeQuantity(1)">1 ta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" onclick="setBarcodeQuantity(5)">5 ta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" onclick="setBarcodeQuantity(10)">10 ta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" onclick="setBarcodeQuantity(20)">20 ta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm mr-2" onclick="setBarcodeQuantity(50)">50 ta</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setBarcodeQuantity(100)">100 ta</button>
+                        </div>
+                    </div>
+
+                    <!-- Alert -->
+                    <div id="barcode-alert" class="alert alert-info" style="display: none;">
+                        <i class="fas fa-info-circle mr-2"></i><span id="barcode-alert-text"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Bekor qilish
+                </button>
+                <button type="button" class="btn btn-primary" onclick="downloadBarcodePDF()">
+                    <i class="fas fa-download mr-2"></i>PDF Yuklab Olish
+                </button>
+                <button type="button" class="btn btn-success" onclick="printBarcode()">
+                    <i class="fas fa-print mr-2"></i>Chop Etish
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+let currentProductId = null;
+
+function openBarcodeModal(productId, productName, productBarcode, productPrice, productImage) {
+    currentProductId = productId;
+    
+    // Ma'lumotlarni modalga o'rnatish
+    document.getElementById('modal-product-name').textContent = productName;
+    document.getElementById('modal-product-barcode').textContent = productBarcode || 'Barcode yo\'q';
+    document.getElementById('modal-product-price').textContent = parseFloat(productPrice).toLocaleString('uz-UZ');
+    
+    // Rasm
+    const imageContainer = document.getElementById('modal-product-image-container');
+    if (productImage) {
+        imageContainer.innerHTML = `<img src="${productImage}" class="img-thumbnail" style="max-height: 100px;">`;
+    } else {
+        imageContainer.innerHTML = '<i class="fas fa-image text-muted" style="font-size: 3rem;"></i>';
+    }
+    
+    // Default miqdor
+    document.getElementById('barcode-quantity').value = 1;
+    
+    // Modalni ochish
+    $('#barcodeModal').modal('show');
+}
+
+function setBarcodeQuantity(quantity) {
+    document.getElementById('barcode-quantity').value = quantity;
+}
+
+function showBarcodeAlert(message, type = 'info') {
+    const alert = document.getElementById('barcode-alert');
+    const alertText = document.getElementById('barcode-alert-text');
+    
+    alert.className = `alert alert-${type}`;
+    alertText.textContent = message;
+    alert.style.display = 'block';
+    
+    setTimeout(() => {
+        alert.style.display = 'none';
+    }, 5000);
+}
+
+function downloadBarcodePDF() {
+    if (!currentProductId) {
+        showBarcodeAlert('Mahsulot tanlanmagan!', 'danger');
+        return;
+    }
+    
+    const quantity = parseInt(document.getElementById('barcode-quantity').value);
+    
+    if (quantity < 1 || quantity > 500) {
+        showBarcodeAlert('Miqdor 1 dan 500 gacha bo\'lishi kerak!', 'warning');
+        return;
+    }
+    
+    // PDF yuklab olish
+    const url = `/products/barcode/bulk/${currentProductId}/?quantity=${quantity}`;
+    
+    showBarcodeAlert(`${quantity} ta sticker PDF yaratilmoqda...`, 'info');
+    
+    // Yangi oynada ochish
+    window.open(url, '_blank');
+    
+    setTimeout(() => {
+        showBarcodeAlert(`✓ PDF muvaffaqiyatli yaratildi va yuklab olindi!`, 'success');
+    }, 1000);
+}
+
+function printBarcode() {
+    if (!currentProductId) {
+        showBarcodeAlert('Mahsulot tanlanmagan!', 'danger');
+        return;
+    }
+    
+    const quantity = parseInt(document.getElementById('barcode-quantity').value);
+    
+    if (quantity < 1 || quantity > 500) {
+        showBarcodeAlert('Miqdor 1 dan 500 gacha bo\'lishi kerak!', 'warning');
+        return;
+    }
+    
+    // PDF yaratish va avtomatik chop etish
+    const url = `/products/barcode/bulk/${currentProductId}/?quantity=${quantity}`;
+    
+    showBarcodeAlert(`${quantity} ta sticker chop etish uchun tayyorlanmoqda...`, 'info');
+    
+    // Iframe orqali ochish va chop etish
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = url;
+    document.body.appendChild(iframe);
+    
+    iframe.onload = function() {
+        try {
+            iframe.contentWindow.print();
+            showBarcodeAlert('✓ Chop etish dialog oynasi ochildi!', 'success');
+            
+            // Iframe ni tozalash
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        } catch (e) {
+            showBarcodeAlert('Chop etishda xatolik yuz berdi. PDF ni yuklab olishni sinab ko\'ring.', 'danger');
+            window.open(url, '_blank');
+            document.body.removeChild(iframe);
+        }
+    };
+}
+
+// Barcode yaratish (agar mahsulotda yo'q bo'lsa)
+function generateBarcode(productId) {
+    fetch(`/products/barcode/generate/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(`✓ Barcode yaratildi: ${data.barcode}\n\nSahifani yangilang.`);
+            location.reload();
+        } else {
+            alert(`Xatolik: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        alert('Barcode yaratishda xatolik yuz berdi: ' + error);
+    });
+}
+
+// CSRF token olish
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>

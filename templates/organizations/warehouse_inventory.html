@@ -1,0 +1,300 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+{% block title %}Ombor - Mahsulotlar{% endblock title %}
+
+{% block stylesheets %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock stylesheets %}
+
+{% block heading %}Ombordagi mahsulotlar{% endblock heading %}
+
+{% block content %}
+
+<!-- Statistika -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Jami mahsulotlar</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_products}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-box fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Jami miqdor</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_quantity}} dona</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-cubes fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Kam qolgan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{low_stock_count}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Tugagan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{out_of_stock_count}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtrlar va Tartiblash -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-filter mr-2"></i>Filtrlar va Tartiblash
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" id="filterForm">
+            <!-- Filtrlar -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label>Qidirish:</label>
+                    <input type="text" class="form-control" name="search" value="{{search_query}}" placeholder="Mahsulot nomi...">
+                </div>
+                <div class="col-md-3">
+                    <label>Kategoriya:</label>
+                    <select class="form-control" name="category" id="categorySelect">
+                        <option value="">Barchasi</option>
+                        {% for cat in categories %}
+                        <option value="{{cat.id}}" {% if selected_category|stringformat:"s" == cat.id|stringformat:"s" %}selected{% endif %}>
+                            {{cat.name}}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Holat:</label>
+                    <select class="form-control" name="status">
+                        <option value="">Barchasi</option>
+                        <option value="ACTIVE" {% if selected_status == "ACTIVE" %}selected{% endif %}>Faol</option>
+                        <option value="INACTIVE" {% if selected_status == "INACTIVE" %}selected{% endif %}>Nofaol</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Tartiblash:</label>
+                    <select class="form-control" name="sort" id="sortSelect">
+                        <option value="name" {% if current_sort == "name" %}selected{% endif %}>Nom (A-Z)</option>
+                        <option value="name_desc" {% if current_sort == "name_desc" %}selected{% endif %}>Nom (Z-A)</option>
+                        <option value="category" {% if current_sort == "category" %}selected{% endif %}>Kategoriya (A-Z)</option>
+                        <option value="category_desc" {% if current_sort == "category_desc" %}selected{% endif %}>Kategoriya (Z-A)</option>
+                        <option value="quantity" {% if current_sort == "quantity" %}selected{% endif %}>Miqdor (Kam → Ko'p)</option>
+                        <option value="quantity_desc" {% if current_sort == "quantity_desc" %}selected{% endif %}>Miqdor (Ko'p → Kam)</option>
+                        <option value="price" {% if current_sort == "price" %}selected{% endif %}>Narx (Arzon → Qimmat)</option>
+                        <option value="price_desc" {% if current_sort == "price_desc" %}selected{% endif %}>Narx (Qimmat → Arzon)</option>
+                        <option value="id" {% if current_sort == "id" %}selected{% endif %}>ID (Eski → Yangi)</option>
+                        <option value="id_desc" {% if current_sort == "id_desc" %}selected{% endif %}>ID (Yangi → Eski)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tugmalar -->
+            <div class="row">
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search mr-2"></i>Qo'llash
+                    </button>
+                    <a href="{% url 'organizations:warehouse_inventory' %}" class="btn btn-secondary ml-2">
+                        <i class="fas fa-redo mr-2"></i>Tozalash
+                    </a>
+                    
+                    <!-- Tezkor tartiblash -->
+                    <div class="btn-group ml-3" role="group">
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="quickSort('quantity')">
+                            <i class="fas fa-sort-amount-down mr-1"></i>Kam qolganlar
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="quickSort('id_desc')">
+                            <i class="fas fa-clock mr-1"></i>Yangi qo'shilganlar
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="quickSort('price_desc')">
+                            <i class="fas fa-dollar-sign mr-1"></i>Qimmat mahsulotlar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Debug ma'lumotlari -->
+{% if search_query or selected_category or selected_status %}
+<div class="alert alert-info">
+    <strong>Faol filtrlar:</strong>
+    {% if search_query %}<span class="badge badge-primary">Qidirish: {{search_query}}</span>{% endif %}
+    {% if selected_category %}<span class="badge badge-success ml-2">Kategoriya ID: {{selected_category}}</span>{% endif %}
+    {% if selected_status %}<span class="badge badge-warning ml-2">Holat: {{selected_status}}</span>{% endif %}
+    <span class="badge badge-info ml-2">Natijalar: {{total_products}}</span>
+</div>
+{% endif %}
+
+<!-- Mahsulotlar jadvali -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Mahsulotlar ro'yxati ({{total_products}} ta)</h6>
+        <a href="{% url 'organizations:warehouse_receive' %}">
+            <button type="button" class="btn btn-success btn-sm">
+                <i class="fas fa-plus mr-1"></i>Mahsulot qabul qilish
+            </button>
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Mahsulot</th>
+                        <th>Kategoriya</th>
+                        <th class="text-center">Miqdor</th>
+                        <th class="text-right">Narx</th>
+                        <th class="text-center">Holat</th>
+                        <th class="text-center">Amal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr>
+                        <td><strong>{{product.id}}</strong></td>
+                        <td>
+                            <strong>{{product.name}}</strong>
+                            {% if product.description %}
+                            <br><small class="text-muted">{{product.description|truncatewords:10}}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{product.category.name}}</td>
+                        <td class="text-center">
+                            {% if product.quantity == 0 %}
+                            <span class="badge badge-danger" style="font-size:1em;">{{product.quantity}}</span>
+                            {% elif product.quantity <= 10 %}
+                            <span class="badge badge-warning" style="font-size:1em;">{{product.quantity}}</span>
+                            {% else %}
+                            <span class="badge badge-success" style="font-size:1em;">{{product.quantity}}</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-right">{{product.price|floatformat:0}} so'm</td>
+                        <td class="text-center">
+                            {% if product.status == 'ACTIVE' %}
+                            <span class="badge badge-success">Faol</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Nofaol</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'organizations:warehouse_product_history' product.id %}">
+                                <button type="button" class="btn btn-info btn-sm" data-toggle="tooltip" title="Tarix">
+                                    <i class="fas fa-history"></i>
+                                </button>
+                            </a>
+                            <a href="{% url 'organizations:barcode_generate' product.id %}">
+                                <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Barcode">
+                                    <i class="fas fa-barcode"></i>
+                                </button>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // DataTable o'chirish (chunki bizda o'z tartiblash tizimimiz bor)
+    // $('#dataTable').DataTable({
+    //     "pageLength": 25,
+    //     "order": [[1, "asc"]]
+    // });
+    
+    // Tartiblash o'zgarganda avtomatik yuborish
+    $('#sortSelect').on('change', function() {
+        console.log('Sort changed:', $(this).val());
+        $('#filterForm').submit();
+    });
+    
+    // Kategoriya o'zgarganda avtomatik yuborish
+    $('#categorySelect').on('change', function() {
+        console.log('Category changed:', $(this).val());
+        $('#filterForm').submit();
+    });
+    
+    // Holat o'zgarganda avtomatik yuborish
+    $('select[name="status"]').on('change', function() {
+        console.log('Status changed:', $(this).val());
+        $('#filterForm').submit();
+    });
+});
+
+// Tezkor tartiblash funksiyasi
+function quickSort(sortType) {
+    const form = document.getElementById('filterForm');
+    const sortSelect = document.getElementById('sortSelect');
+    sortSelect.value = sortType;
+    form.submit();
+}
+
+// Jadval ranglarini yangilash
+$(document).ready(function() {
+    // Kam qolgan mahsulotlarni ajratib ko'rsatish
+    $('table tbody tr').each(function() {
+        const qtyBadge = $(this).find('td:eq(3) .badge');
+        if (qtyBadge.hasClass('badge-danger')) {
+            $(this).css('background-color', '#ffe6e6');
+        } else if (qtyBadge.hasClass('badge-warning')) {
+            $(this).css('background-color', '#fff8e6');
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

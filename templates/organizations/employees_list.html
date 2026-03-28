@@ -1,0 +1,112 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+{% block title %}Xodimlar{% endblock title %}
+
+{% block stylesheets %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock stylesheets %}
+
+{% block heading %}Xodimlar boshqaruvi{% endblock heading %}
+
+{% block content %}
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            <i class="fas fa-users mr-2"></i>Xodimlar ro'yxati
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Foydalanuvchi</th>
+                        <th>Ism</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th>Ruxsatlar</th>
+                        <th class="text-center">Amal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in employees_data %}
+                    <tr>
+                        <td>{{forloop.counter}}</td>
+                        <td>
+                            <strong>{{data.employee.username}}</strong>
+                            {% if data.employee.is_superuser %}
+                            <span class="badge badge-danger ml-2">Admin</span>
+                            {% elif data.employee.is_staff %}
+                            <span class="badge badge-warning ml-2">Staff</span>
+                            {% endif %}
+                        </td>
+                        <td>{{data.employee.first_name}} {{data.employee.last_name}}</td>
+                        <td>{{data.employee.email|default:"—"}}</td>
+                        <td>
+                            {% if data.employee.is_active %}
+                            <span class="badge badge-success">Faol</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Nofaol</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if data.has_permissions %}
+                            <span class="badge badge-info">
+                                <i class="fas fa-check mr-1"></i>Sozlangan
+                            </span>
+                            {% else %}
+                            <span class="badge badge-secondary">
+                                <i class="fas fa-times mr-1"></i>Sozlanmagan
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <a href="{% url 'organizations:employee_permissions' data.employee.id %}">
+                                <button type="button" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Ruxsatlarni sozlash">
+                                    <i class="fas fa-user-shield"></i>
+                                </button>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Ma'lumot -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="alert alert-info">
+            <h5><i class="fas fa-info-circle mr-2"></i>Xodimlar ruxsatlari haqida</h5>
+            <hr>
+            <p><strong>Ruxsatlar tizimi:</strong></p>
+            <ul>
+                <li><strong>Admin</strong> - Barcha ruxsatlarga ega</li>
+                <li><strong>Staff</strong> - Admin panelga kirish huquqi</li>
+                <li><strong>Oddiy xodim</strong> - Faqat berilgan ruxsatlar</li>
+            </ul>
+            <p class="mb-0"><strong>Maslahat:</strong> Har bir xodim uchun kerakli ruxsatlarni alohida sozlang.</p>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Uzbek.json"
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

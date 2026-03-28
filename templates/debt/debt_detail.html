@@ -1,0 +1,312 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+<!-- Page title  -->
+{% block title %}{{ debt.organization.name }} - Qarz tafsilotlari{% endblock title %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<!--Select2 CSS-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
+<!-- Datepicker -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+{% endblock stylesheets %}
+
+<!-- Page Heading -->
+{% block heading %}Qarz tafsilotlari{% endblock heading %}
+
+<!-- Page content  -->
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'debt:debt_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<!-- Asosiy ma'lumotlar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-info-circle mr-2"></i>Qarz ma'lumotlari
+                </h6>
+                <div>
+                    <span class="badge badge-{{ debt.status_badge_class }} badge-lg">
+                        {{ debt.get_payment_status_display }}
+                    </span>
+                    {% if debt.is_overdue %}
+                    <span class="badge badge-warning badge-lg ml-2">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>{{ debt.days_overdue }} kun muddati o'tgan
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Tashkilot:</strong></td>
+                                <td>{{ debt.organization.name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mahsulot/Ish:</strong></td>
+                                <td>{{ debt.product_or_service }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Qarz sanasi:</strong></td>
+                                <td>{{ debt.date|date:"d.m.Y" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>To'lov muddati:</strong></td>
+                                <td>
+                                    {{ debt.due_date|date:"d.m.Y" }}
+                                    {% if debt.is_overdue %}
+                                    <span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Muddati o'tgan</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Umumiy summa:</strong></td>
+                                <td class="font-weight-bold">{{ debt.total_amount|floatformat:2 }} $</td>
+                            </tr>
+                            <tr>
+                                <td><strong>To'langan summa:</strong></td>
+                                <td class="text-success font-weight-bold">{{ debt.paid_amount|floatformat:2 }} $</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Qolgan qarz:</strong></td>
+                                <td class="font-weight-bold {{ debt.status_color }}">{{ debt.remaining_amount|floatformat:2 }} $</td>
+                            </tr>
+                            <tr>
+                                <td><strong>To'lov foizi:</strong></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        {% widthratio debt.paid_amount debt.total_amount 100 as percentage %}
+                                        <div class="progress-bar bg-{{ debt.status_color }}" role="progressbar" 
+                                             style="width: {{ percentage }}%" 
+                                             aria-valuenow="{{ percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ percentage|floatformat:1 }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if debt.notes %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><strong>Izohlar:</strong></h6>
+                        <p class="text-muted">{{ debt.notes }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Amallar -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="btn-group" role="group">
+                            <a href="{% url 'debt:debt_update' debt.id %}" class="btn btn-warning">
+                                <i class="fas fa-edit mr-2"></i>Tahrirlash
+                            </a>
+                            {% if debt.payment_status != 'PAID' %}
+                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#paymentModal">
+                                <i class="fas fa-money-bill-wave mr-2"></i>To'lov qilish
+                            </button>
+                            {% endif %}
+                            <a href="{% url 'debt:debt_delete' debt.id %}" class="btn btn-danger">
+                                <i class="fas fa-trash mr-2"></i>O'chirish
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- To'lovlar tarixi -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-history mr-2"></i>To'lovlar tarixi
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead>
+                            <tr>
+                                <th>To'lov summasi</th>
+                                <th>To'lov sanasi</th>
+                                <th>Izoh</th>
+                                <th>Kiritgan xodim</th>
+                                <th>Kiritilgan sana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td class="text-success font-weight-bold">{{ payment.amount|floatformat:2 }} $</td>
+                                <td>{{ payment.payment_date|date:"d.m.Y" }}</td>
+                                <td>{{ payment.notes|default:"-" }}</td>
+                                <td>{{ payment.created_by.username|default:"-" }}</td>
+                                <td>{{ payment.created_date|date:"d.m.Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-success">
+                                <th colspan="4">Jami to'langan:</th>
+                                <th class="font-weight-bold">{{ debt.paid_amount|floatformat:2 }} $</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Hozircha to'lovlar yo'q</h5>
+                    <p class="text-muted">Bu qarz uchun hali to'lov amallari bajarilmagan</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- To'lov modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">To'lov qilish</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <strong>Qolgan qarz:</strong> {{ debt.remaining_amount|floatformat:2 }} $
+                </div>
+                
+                <form id="paymentForm">
+                    <input type="hidden" id="debtId" name="debt_id" value="{{ debt.id }}">
+                    
+                    <div class="form-group">
+                        <label for="paymentAmount">To'lov summasi</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" id="paymentAmount" name="amount" 
+                                   max="{{ debt.remaining_amount }}" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Maksimal to'lov: {{ debt.remaining_amount|floatformat:2 }} $</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paymentDate">To'lov sanasi</label>
+                        <input type="text" class="form-control" id="paymentDate" name="payment_date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paymentNotes">Izoh</label>
+                        <textarea class="form-control" id="paymentNotes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-success" id="submitPayment">To'lovni saqlash</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<!-- jQuery -->
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- Core plugin JavaScript-->
+<script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<!-- Custom scripts for all pages-->
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+<!-- Datepicker JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Datepicker初始化
+    flatpickr("#paymentDate", {
+        locale: "uz",
+        dateFormat: "Y-m-d",
+        defaultDate: "today"
+    });
+    
+    // To'lovni saqlash
+    $('#submitPayment').click(function() {
+        const amount = parseFloat($('#paymentAmount').val());
+        const paymentDate = $('#paymentDate').val();
+        const notes = $('#paymentNotes').val();
+        
+        if (!amount || amount <= 0) {
+            alert('To\'lov summasini kiriting!');
+            return;
+        }
+        
+        const maxAmount = parseFloat('{{ debt.remaining_amount }}');
+        if (amount > maxAmount) {
+            alert(`To\'lov summasi qolgan qarzdan (${maxAmount.toFixed(2)} $) katta bo\'lishi mumkin emas!`);
+            return;
+        }
+        
+        $.ajax({
+            url: "{% url 'debt:ajax_add_payment' debt.id %}",
+            type: "POST",
+            data: {
+                amount: amount,
+                payment_date: paymentDate,
+                notes: notes,
+                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    $('#paymentModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function(error) {
+                console.log("Payment error:", error);
+                alert('To\'lov qilishda xatolik yuz berdi!');
+            }
+        });
+    });
+});
+</script>
+{% endblock javascripts %}

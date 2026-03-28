@@ -1,0 +1,457 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+<!-- Page title  -->
+{% block title %}Qarzlar ro'yxati{% endblock title %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<!-- Datatables -->
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+<!--Select2 CSS-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
+<!-- Datepicker -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+{% endblock stylesheets %}
+
+<!-- Page Heading -->
+{% block heading %}Qarzlar ro'yxati{% endblock heading %}
+
+<!-- Page content  -->
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'debt:debt_dashboard' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Boshqaruv paneli
+        </button>
+    </a>
+</div>
+
+<!-- Filterlar -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-filter mr-2"></i>Filterlar va qidiruv
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="get" id="filterForm">
+                    <div class="row">
+                        <!-- Qidiruv -->
+                        <div class="col-md-3">
+                            <label for="search">Qidiruv</label>
+                            <input type="text" class="form-control" name="search" id="search" value="{{ search_query }}" placeholder="Tashkilot yoki mahsulot...">
+                        </div>
+                        
+                        <!-- Tashkilot -->
+                        <div class="col-md-3">
+                            <label for="organization">Tashkilot</label>
+                            <select class="form-control select2" name="organization" id="organizationFilter">
+                                <option value="">Barchasi</option>
+                                {% for org in organizations %}
+                                <option value="{{ org.id }}" {% if organization_filter == org.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ org.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="col-md-2">
+                            <label for="status">Status</label>
+                            <select class="form-control" name="status" id="statusFilter">
+                                <option value="">Barchasi</option>
+                                <option value="UNPAID" {% if status_filter == 'UNPAID' %}selected{% endif %}>To'lanmagan</option>
+                                <option value="PARTIAL" {% if status_filter == 'PARTIAL' %}selected{% endif %}>Qisman</option>
+                                <option value="PAID" {% if status_filter == 'PAID' %}selected{% endif %}>To'liq</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Muddati o'tgan -->
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="overdue_only" id="overdueOnly" value="true" {% if overdue_only %}checked{% endif %}>
+                                <label class="form-check-label" for="overdueOnly">
+                                    Faqat muddati o'tganlar
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Tozalash -->
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn btn-secondary btn-block" id="clearFilters">
+                                <i class="fas fa-times mr-1"></i>Tozalash
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <!-- Sana oralig'i -->
+                        <div class="col-md-2">
+                            <label for="date_from">Boshlanish sanasi</label>
+                            <input type="text" class="form-control" name="date_from" id="dateFrom" value="{{ date_from }}" placeholder="dd.mm.yyyy">
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="date_to">Tugash sanasi</label>
+                            <input type="text" class="form-control" name="date_to" id="dateTo" value="{{ date_to }}" placeholder="dd.mm.yyyy">
+                        </div>
+                        
+                        <!-- Summa oralig'i -->
+                        <div class="col-md-2">
+                            <label for="min_amount">Min summa</label>
+                            <input type="number" step="0.01" class="form-control" name="min_amount" id="minAmount" value="{{ min_amount }}" placeholder="0">
+                        </div>
+                        
+                        <div class="col-md-2">
+                            <label for="max_amount">Max summa</label>
+                            <input type="number" step="0.01" class="form-control" name="max_amount" id="maxAmount" value="{{ max_amount }}" placeholder="999999">
+                        </div>
+                        
+                        <!-- Qidirish tugmasi -->
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <i class="fas fa-search mr-1"></i>Qidirish
+                            </button>
+                        </div>
+                        
+                        <!-- Yangi qarz -->
+                        <div class="col-md-2">
+                            <label>&nbsp;</label>
+                            <a href="{% url 'debt:debt_add' %}" class="btn btn-success btn-block">
+                                <i class="fas fa-plus mr-1"></i>Yangi qarz
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Qarzlar jadvali -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-list mr-2"></i>Qarzlar ro'yxati
+                </h6>
+                <div>
+                    <span class="badge badge-info mr-2">Jami: {{ page_obj.paginator.count }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="exportBtn">
+                        <i class="fas fa-download mr-1"></i>Eksport
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="debtTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <a href="?sort=organization__name{% if request.GET.sort == 'organization__name' %}&sort=-organization__name{% endif %}" class="text-decoration-none">
+                                        Tashkilot <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=product_or_service{% if request.GET.sort == 'product_or_service' %}&sort=-product_or_service{% endif %}" class="text-decoration-none">
+                                        Mahsulot/Ish <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=date{% if request.GET.sort == 'date' %}&sort=-date{% endif %}" class="text-decoration-none">
+                                        Sana <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=total_amount{% if request.GET.sort == 'total_amount' %}&sort=-total_amount{% endif %}" class="text-decoration-none">
+                                        Umumiy summa <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=paid_amount{% if request.GET.sort == 'paid_amount' %}&sort=-paid_amount{% endif %}" class="text-decoration-none">
+                                        To'langan <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=remaining_amount{% if request.GET.sort == 'remaining_amount' %}&sort=-remaining_amount{% endif %}" class="text-decoration-none">
+                                        Qolgan qarz <i class="fas fa-sort"></i>
+                                    </a>
+                                </th>
+                                <th>Status</th>
+                                <th>Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for debt in page_obj %}
+                            <tr class="{% if debt.is_overdue %}table-warning{% endif %}">
+                                <td>
+                                    <strong>{{ debt.organization.name }}</strong>
+                                    {% if debt.is_overdue %}
+                                    <br><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> {{ debt.days_overdue }} kun muddati o'tgan</small>
+                                    {% endif %}
+                                </td>
+                                <td>{{ debt.product_or_service }}</td>
+                                <td>{{ debt.date|date:"d.m.Y" }}</td>
+                                <td class="text-right font-weight-bold">{{ debt.total_amount|floatformat:2 }} $</td>
+                                <td class="text-right">{{ debt.paid_amount|floatformat:2 }} $</td>
+                                <td class="text-right font-weight-bold {{ debt.status_color }}">
+                                    {{ debt.remaining_amount|floatformat:2 }} $
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge badge-{{ debt.status_badge_class }}">
+                                        {{ debt.get_payment_status_display }}
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{% url 'debt:debt_detail' debt.id %}" class="btn btn-sm btn-info" title="Ko'rish">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if debt.payment_status != 'PAID' %}
+                                        <button type="button" class="btn btn-sm btn-success payment-btn" data-id="{{ debt.id }}" title="To'lov qilish">
+                                            <i class="fas fa-money-bill-wave"></i>
+                                        </button>
+                                        {% endif %}
+                                        <a href="{% url 'debt:debt_update' debt.id %}" class="btn btn-sm btn-warning" title="Tahrirlash">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'debt:debt_delete' debt.id %}" class="btn btn-sm btn-danger" title="O'chirish">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <h5>Qarz yozuvlari topilmadi</h5>
+                                    <p>Filterlarni o'zgartirib ko'ring yoki yangi qarz qo'shing</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ request.GET.urlencode }}">Previous</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Previous</span>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{{ request.GET.urlencode }}">{{ num }}</a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ request.GET.urlencode }}">Next</a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">Next</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- To'lov modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">To'lov qilish</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="debtId" name="debt_id">
+                    
+                    <div class="form-group">
+                        <label for="paymentAmount">To'lov summasi</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" id="paymentAmount" name="amount" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paymentDate">To'lov sanasi</label>
+                        <input type="text" class="form-control" id="paymentDate" name="payment_date">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="paymentNotes">Izoh</label>
+                        <textarea class="form-control" id="paymentNotes" name="notes" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Bekor qilish</button>
+                <button type="button" class="btn btn-success" id="submitPayment">To'lovni saqlash</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<!-- jQuery -->
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- Core plugin JavaScript-->
+<script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<!-- Custom scripts for all pages-->
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+<!-- Select2 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Datepicker JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Select2初始化
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Tanlang...',
+        allowClear: true
+    });
+    
+    // Datepicker初始化
+    flatpickr("#dateFrom, #dateTo", {
+        locale: "uz",
+        dateFormat: "Y-m-d"
+    });
+    
+    flatpickr("#paymentDate", {
+        locale: "uz",
+        dateFormat: "Y-m-d",
+        defaultDate: "today"
+    });
+    
+    // Filterlarni tozalash
+    $('#clearFilters').click(function() {
+        $('#filterForm')[0].reset();
+        $('.select2').val(null).trigger('change');
+        window.location.href = "{% url 'debt:debt_list' %}";
+    });
+    
+    // To'lov tugmasi
+    $('.payment-btn').click(function() {
+        const debtId = $(this).data('id');
+        $('#debtId').val(debtId);
+        $('#paymentModal').modal('show');
+    });
+    
+    // To'lovni saqlash
+    $('#submitPayment').click(function() {
+        const debtId = $('#debtId').val();
+        const amount = $('#paymentAmount').val();
+        const paymentDate = $('#paymentDate').val();
+        const notes = $('#paymentNotes').val();
+        
+        if (!amount || amount <= 0) {
+            alert('To\'lov summasini kiriting!');
+            return;
+        }
+        
+        $.ajax({
+            url: "{% url 'debt:ajax_add_payment' debt_id|default:0 %}".replace('0', debtId),
+            type: "POST",
+            data: {
+                amount: amount,
+                payment_date: paymentDate,
+                notes: notes,
+                csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    $('#paymentModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message);
+                }
+            },
+            error: function(error) {
+                console.log("Payment error:", error);
+                alert('To\'lov qilishda xatolik yuz berdi!');
+            }
+        });
+    });
+    
+    // Eksport tugmasi
+    $('#exportBtn').click(function() {
+        // Hozircha oddiy eksport
+        const table = document.getElementById('debtTable');
+        let csv = [];
+        
+        // Sarlavhalar
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => {
+            headers.push(th.textContent.trim());
+        });
+        csv.push(headers.join(','));
+        
+        // Qatorlar
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const row = [];
+            tr.querySelectorAll('td').forEach(td => {
+                row.push(td.textContent.trim());
+            });
+            csv.push(row.join(','));
+        });
+        
+        // Yuklab olish
+        const csvContent = csv.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'qarzlar_' + new Date().toISOString().split('T')[0] + '.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    });
+});
+</script>
+{% endblock javascripts %}

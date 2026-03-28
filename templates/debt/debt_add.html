@@ -1,0 +1,276 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+<!-- Page title  -->
+{% block title %}Yangi qarz qo'shish{% endblock title %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}
+<!--Select2 CSS-->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap4-theme@1.5.2/dist/select2-bootstrap4.min.css">
+<!-- Datepicker -->
+<link href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" rel="stylesheet">
+{% endblock stylesheets %}
+
+<!-- Page Heading -->
+{% block heading %}Yangi qarz qo'shish{% endblock heading %}
+
+<!-- Page content  -->
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'debt:debt_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-plus-circle mr-2"></i>Yangi qarz qo'shish
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="debtForm">
+                    {% csrf_token %}
+                    
+                    <!-- Tashkilot -->
+                    <div class="form-group">
+                        <label for="organization">Tashkilot <span class="text-danger">*</span></label>
+                        <select class="form-control select2" name="organization" id="organization" required>
+                            <option value="">Tashkilotni tanlang...</option>
+                            {% for org in organizations %}
+                            <option value="{{ org.id }}">{{ org.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Tashkilot nomini yozib qidirishingiz mumkin</small>
+                    </div>
+
+                    <!-- Mahsulot yoki ish -->
+                        <div class="form-group">
+                            <label for="product_or_service">
+                                Mahsulot yoki bajarilgan ish 
+                                <span class="text-danger">*</span>
+                            </label>
+                            <textarea 
+                                class="form-control" 
+                                name="product_or_service" 
+                                id="product_or_service" 
+                                rows="4" 
+                                required
+                            ></textarea>
+                        </div>
+
+                    <!-- Umumiy summa -->
+                    <div class="form-group">
+                        <label for="total_amount">Umumiy summa <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="total_amount" id="total_amount" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- To'lov holati -->
+                    <div class="form-group">
+                        <label for="payment_status">To'lov holati</label>
+                        <select class="form-control" name="payment_status" id="payment_status">
+                            <option value="UNPAID" selected>To'lanmagan</option>
+                            <option value="PARTIAL">Qisman</option>
+                            <option value="PAID">To'liq</option>
+                        </select>
+                    </div>
+
+                    <!-- To'langan summa (faqat qisman va to'liq uchun) -->
+                    <div class="form-group" id="paidAmountGroup" style="display:none;">
+                        <label for="paid_amount">To'langan summa</label>
+                        <div class="input-group">
+                            <input type="number" step="0.01" class="form-control" name="paid_amount" id="paid_amount" value="0">
+                            <div class="input-group-append">
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Qolgan qarz avtomatik hisoblanadi</small>
+                    </div>
+
+                    <!-- Qolgan qarz (faqat ko'rish uchun) -->
+                    <div class="form-group" id="remainingAmountGroup" style="display:none;">
+                        <label>Qolgan qarz</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="remaining_amount" readonly>
+                            <div class="input-group-append">
+                                <span class="input-group-text">$</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted text-success">Avtomatik hisoblanadi</small>
+                    </div>
+
+                    <!-- Sana -->
+                    <div class="form-group">
+                        <label for="date">Sana</label>
+                        <input type="text" class="form-control" name="date" id="date" placeholder="Bugungi sana">
+                        <small class="form-text text-muted">Agar kiritilmasa, bugungi sana qo'yiladi</small>
+                    </div>
+
+                    <!-- To'lov muddati -->
+                    <div class="form-group">
+                        <label for="due_date">To'lov muddati <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="due_date" id="due_date" required>
+                    </div>
+
+                    <!-- Izohlar -->
+                    <div class="form-group">
+                        <label for="notes">Izohlar</label>
+                        <textarea class="form-control" name="notes" id="notes" rows="3"></textarea>
+                        <small class="form-text text-muted">Izoh kiritish shart emas</small>
+                    </div>
+
+                    <!-- Tugmalar -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <a href="{% url 'debt:debt_list' %}" class="btn btn-secondary btn-block font-weight-bold">
+                                <i class="fas fa-times mr-2"></i>Bekor qilish
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <button type="submit" class="btn btn-success btn-block font-weight-bold">
+                                <i class="fas fa-save mr-2"></i>Saqlash
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<!-- jQuery -->
+<script src="{% static 'vendor/jquery/jquery.min.js' %}"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+<!-- Core plugin JavaScript-->
+<script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
+<!-- Custom scripts for all pages-->
+<script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+<!-- Select2 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<!-- Datepicker JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uz.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Select2初始化
+    $('.select2').select2({
+        theme: 'bootstrap4',
+        placeholder: 'Tashkilotni tanlang...',
+        allowClear: true
+    });
+    
+    // Datepicker初始化
+    flatpickr("#date", {
+        locale: "uz",
+        dateFormat: "Y-m-d",
+        defaultDate: "today"
+    });
+    
+    flatpickr("#due_date", {
+        locale: "uz",
+        dateFormat: "Y-m-d",
+        minDate: "today"
+    });
+    
+    // To'lov holati o'zgarganda
+    $('#payment_status').on('change', function() {
+        const status = $(this).val();
+        const totalAmount = parseFloat($('#total_amount').val()) || 0;
+        
+        if (status === 'UNPAID') {
+            // To'lanmagan
+            $('#paidAmountGroup').hide();
+            $('#remainingAmountGroup').hide();
+            $('#paid_amount').val(0);
+        } else if (status === 'PARTIAL') {
+            // Qisman
+            $('#paidAmountGroup').show();
+            $('#remainingAmountGroup').show();
+            $('#paid_amount').val(0);
+            calculateRemaining();
+        } else if (status === 'PAID') {
+            // To'liq
+            $('#paidAmountGroup').show();
+            $('#remainingAmountGroup').show();
+            $('#paid_amount').val(totalAmount);
+            calculateRemaining();
+        }
+    });
+    
+    // Umumiy summa o'zgarganda
+    $('#total_amount').on('input', function() {
+        const status = $('#payment_status').val();
+        const totalAmount = parseFloat($(this).val()) || 0;
+        
+        if (status === 'PAID') {
+            $('#paid_amount').val(totalAmount);
+        }
+        calculateRemaining();
+    });
+    
+    // To'langan summa o'zgarganda
+    $('#paid_amount').on('input', function() {
+        calculateRemaining();
+    });
+    
+    // Qolgan qarzni hisoblash
+    function calculateRemaining() {
+        const totalAmount = parseFloat($('#total_amount').val()) || 0;
+        const paidAmount = parseFloat($('#paid_amount').val()) || 0;
+        const remaining = totalAmount - paidAmount;
+        
+        if (remaining < 0) {
+            $('#remaining_amount').val(0);
+            $('#paid_amount').val(totalAmount);
+        } else {
+            $('#remaining_amount').val(remaining.toFixed(2));
+        }
+    }
+    
+    // Form validatsiyasi
+    $('#debtForm').on('submit', function(e) {
+        const totalAmount = parseFloat($('#total_amount').val()) || 0;
+        const paidAmount = parseFloat($('#paid_amount').val()) || 0;
+        const status = $('#payment_status').val();
+        
+        // Validatsiya
+        if (totalAmount <= 0) {
+            e.preventDefault();
+            alert('Umumiy summa 0 dan katta bo\'lishi kerak!');
+            return;
+        }
+        
+        if (status === 'PARTIAL' && paidAmount >= totalAmount) {
+            e.preventDefault();
+            alert('Qisman to\'lov uchun to\'langan summa umumiy summadan kichik bo\'lishi kerak!');
+            return;
+        }
+        
+        if (status === 'PAID' && paidAmount !== totalAmount) {
+            e.preventDefault();
+            alert('To\'liq to\'lov uchun to\'langan summa umumiy summa bilan teng bo\'lishi kerak!');
+            return;
+        }
+    });
+});
+</script>
+{% endblock javascripts %}

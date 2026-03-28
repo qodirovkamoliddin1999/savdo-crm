@@ -1,0 +1,199 @@
+{% extends "pos/base.html" %}
+
+{% block title %}{{product.name}} - Tarix{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Mahsulot tarixi{% endblock heading %}
+
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:warehouse_inventory' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Ombor
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Mahsulot ma'lumotlari -->
+    <div class="col-lg-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-box mr-2"></i>{{product.name}}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p><strong>Kategoriya:</strong><br>{{product.category.name}}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Hozirgi miqdor:</strong><br>
+                            {% if product.quantity == 0 %}
+                            <span class="badge badge-danger" style="font-size:1.2em;">{{product.quantity}} dona</span>
+                            {% elif product.quantity <= 10 %}
+                            <span class="badge badge-warning" style="font-size:1.2em;">{{product.quantity}} dona</span>
+                            {% else %}
+                            <span class="badge badge-success" style="font-size:1.2em;">{{product.quantity}} dona</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Narxi:</strong><br>{{product.price|floatformat:0}} so'm</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Holat:</strong><br>
+                            {% if product.status == 'ACTIVE' %}
+                            <span class="badge badge-success">Faol</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Nofaol</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% if product.description %}
+                <hr>
+                <p><strong>Tavsif:</strong> {{product.description}}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Chiqish tarixi -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">
+                    <i class="fas fa-arrow-down mr-2"></i>Chiqish tarixi (Yuk xatlari)
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if deliveries %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Yuk xati</th>
+                                <th>Sana</th>
+                                <th>Tashkilot</th>
+                                <th class="text-center">Miqdor</th>
+                                <th class="text-right">Summa</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in deliveries %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td>
+                                    <a href="{% url 'organizations:delivery_notes_detail' detail.delivery_note.id %}">
+                                        {{detail.delivery_note.number}}
+                                    </a>
+                                </td>
+                                <td>{{detail.delivery_note.date|date:"d.m.Y"}}</td>
+                                <td>{{detail.delivery_note.organization.short_name}}</td>
+                                <td class="text-center"><strong>{{detail.quantity}}</strong></td>
+                                <td class="text-right">{{detail.total|floatformat:0}} so'm</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr class="table-info">
+                                <th colspan="4" class="text-right">Jami chiqarilgan:</th>
+                                <th class="text-center">
+                                    {% widthratio deliveries|length 1 1 as total_qty %}
+                                    {{ deliveries|length }} ta yuk xati
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">Chiqish tarixi yo'q</p>
+                <p class="text-center">
+                    <i class="fas fa-inbox fa-3x text-muted"></i>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Barcode'lar -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-barcode mr-2"></i>Barcode'lar
+                </h6>
+                <a href="{% url 'organizations:barcode_generate' product.id %}">
+                    <button type="button" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus mr-1"></i>Qo'shish
+                    </button>
+                </a>
+            </div>
+            <div class="card-body">
+                {% if barcodes %}
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Barcode</th>
+                                <th>Sana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bc in barcodes %}
+                            <tr>
+                                <td><strong>{{bc.barcode}}</strong></td>
+                                <td>{{bc.created_date|date:"d.m.Y"}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">Barcode'lar yo'q</p>
+                <div class="text-center">
+                    <a href="{% url 'organizations:barcode_generate' product.id %}">
+                        <button type="button" class="btn btn-primary">
+                            <i class="fas fa-barcode mr-2"></i>Birinchi barcode yarating
+                        </button>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistika -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-chart-pie mr-2"></i>Statistika
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Jami chiqarilgan:</strong><br>
+                    {% if deliveries %}
+                    {{deliveries|length}} ta yuk xati
+                    {% else %}
+                    0 ta
+                    {% endif %}
+                </p>
+                <p><strong>Barcode'lar:</strong><br>{{barcodes|length}} ta</p>
+                <p class="mb-0"><strong>Qo'shilgan:</strong><br>{{product.created_date|date:"d.m.Y"}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

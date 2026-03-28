@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <title>Yuk xati №{{delivery_note.number}}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "DejaVu Sans", Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #000;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+        }
+        
+        .header h1 {
+            font-size: 18pt;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 9pt;
+            margin: 2px 0;
+        }
+        
+        .info-section {
+            margin-bottom: 15px;
+        }
+        
+        .info-box {
+            border: 1px solid #000;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .info-box h3 {
+            font-size: 11pt;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 3px;
+        }
+        
+        .info-row {
+            margin: 5px 0;
+        }
+        
+        .info-row strong {
+            display: inline-block;
+            width: 150px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        table th,
+        table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        table th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        table td.number {
+            text-align: center;
+        }
+        
+        table td.amount {
+            text-align: right;
+        }
+        
+        .total-row {
+            background-color: #f9f9f9;
+            font-weight: bold;
+        }
+        
+        .signatures {
+            margin-top: 40px;
+            display: table;
+            width: 100%;
+        }
+        
+        .signature-box {
+            display: table-cell;
+            width: 50%;
+            padding: 10px;
+        }
+        
+        .signature-line {
+            border-bottom: 1px solid #000;
+            width: 200px;
+            margin: 30px 0 5px 0;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 9pt;
+            color: #666;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sarlavha -->
+    <div class="header">
+        <h1>YUK XATI</h1>
+        <p>№ {{delivery_note.number}}</p>
+        <p>Sana: {{delivery_note.date|date:"d.m.Y"}}</p>
+    </div>
+
+    <!-- Yetkazib beruvchi -->
+    <div class="info-section">
+        <div class="info-box">
+            <h3>YETKAZIB BERUVCHI:</h3>
+            <div class="info-row">
+                <strong>Nomi:</strong> "AT-GOOD SERVIS" MCHJ
+            </div>
+            <div class="info-row">
+                <strong>Manzil:</strong>Андижан просп. Алишера Навои 99-101
+            </div>
+            <div class="info-row">
+                <strong>INN:</strong> 308876454
+            </div>
+            <div class="info-row">
+                <strong>Telefon:</strong> +998 91 288 91 12
+            </div>
+        </div>
+    </div>
+
+    <!-- Qabul qiluvchi -->
+    <div class="info-section">
+        <div class="info-box">
+            <h3>QABUL QILUVCHI:</h3>
+            <div class="info-row">
+                <strong>Tashkilot:</strong> {{organization.name}}
+            </div>
+            <div class="info-row">
+                <strong>Qisqacha:</strong> {{organization.short_name}}
+            </div>
+            <div class="info-row">
+                <strong>Manzil:</strong> {{organization.get_full_address}}
+            </div>
+            <div class="info-row">
+                <strong>INN:</strong> {{organization.inn}}
+            </div>
+            <div class="info-row">
+                <strong>Telefon:</strong> {{organization.phone}}
+            </div>
+            <div class="info-row">
+                <strong>Mas'ul shaxs:</strong> {{organization.responsible_person}}
+                {% if organization.responsible_position %}({{organization.responsible_position}}){% endif %}
+            </div>
+            {% if organization.responsible_phone %}
+            <div class="info-row">
+                <strong>Mas'ul tel:</strong> {{organization.responsible_phone}}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Shartnoma -->
+    {% if delivery_note.contract %}
+    <div class="info-section">
+        <div class="info-row">
+            <strong>Shartnoma:</strong> №{{delivery_note.contract.number}} dan {{delivery_note.contract.contract_date|date:"d.m.Y"}}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Mahsulotlar jadvali -->
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 5%;">№</th>
+                <th style="width: 35%;">Mahsulot nomi</th>
+                <th style="width: 20%;">Seriya raqami</th>
+                <th style="width: 10%;">Soni</th>
+                <th style="width: 15%;">Narxi (so'm)</th>
+                <th style="width: 15%;">Summa (so'm)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detail in details %}
+            <tr>
+                <td class="number">{{forloop.counter}}</td>
+                <td>{{detail.product_name}}</td>
+                <td>{{detail.serial_number|default:"—"}}</td>
+                <td class="number">{{detail.quantity}}</td>
+                <td class="amount">{{detail.price|floatformat:0}}</td>
+                <td class="amount">{{detail.total|floatformat:0}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="5" style="text-align: right;">JAMI:</td>
+                <td class="amount">{{delivery_note.total_amount|floatformat:0}}</td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <!-- Qo'shimcha ma'lumotlar -->
+    {% if delivery_note.notes %}
+    <div class="info-section">
+        <div class="info-row">
+            <strong>Izohlar:</strong> {{delivery_note.notes}}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Imzolar -->
+    <div class="signatures">
+        <div class="signature-box">
+            <p><strong>Topshirdi:</strong></p>
+            <div class="signature-line"></div>
+            <p style="margin-top: 5px;">
+                {% if delivery_note.created_by %}
+                {{delivery_note.created_by.username}}
+                {% else %}
+                _________________
+                {% endif %}
+            </p>
+            <p style="margin-top: 20px;">M.O. _______________</p>
+        </div>
+        <div class="signature-box">
+            <p><strong>Qabul qildi:</strong></p>
+            <div class="signature-line"></div>
+            <p style="margin-top: 5px;">{{organization.responsible_person}}</p>
+            <p style="margin-top: 20px;">M.O. _______________</p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Yuk xati yaratilgan: {{delivery_note.created_date|date:"d.m.Y H:i"}}</p>
+        <p>Ushbu hujjat elektron tizimda yaratilgan va imzo talab qilmaydi</p>
+    </div>
+</body>
+</html>

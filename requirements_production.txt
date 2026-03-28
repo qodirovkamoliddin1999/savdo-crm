@@ -1,0 +1,53 @@
+# CRM.Aptech.uz - Production Requirements
+
+# Django Framework
+Django==4.1.5
+django-cors-headers==4.3.1
+django-extensions==3.2.3
+
+# Database
+sqlite3  # Django bilan birga keladi
+
+# Web Server
+gunicorn==21.2.0
+whitenoise==6.6.0
+
+# PDF Generation
+WeasyPrint==60.2
+
+# Image Processing
+Pillow==10.1.0
+
+# Date/Time
+python-dateutil==2.8.2
+
+# Security
+cryptography==41.0.7
+
+# Monitoring
+psutil==5.9.6
+
+# Development (productionda olib tashlash mumkin)
+django-debug-toolbar==4.2.0
+
+# API (agar kerak bo'lsa)
+djangorestframework==3.14.0
+
+# Caching
+redis==5.0.1
+django-redis==5.4.0
+
+# Email (agar kerak bo'lsa)
+django-anymail==10.2
+
+# Forms
+django-crispy-forms==2.1
+crispy-bootstrap4==2022.1
+
+# Utilities
+python-decouple==3.8
+requests==2.31.0
+
+# Testing (productionda olib tashlash mumkin)
+pytest==7.4.3
+pytest-django==4.7.0

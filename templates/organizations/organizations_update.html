@@ -1,0 +1,143 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Tashkilotni tahrirlash{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Tashkilotni tahrirlash{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:organizations_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <div class="card col-md-12">
+        <div class="card-body">
+            <form action="{% url 'organizations:organizations_update' organization.id %}" method="post">
+                {% csrf_token %}
+                
+                <!-- Asosiy ma'lumotlar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-info-circle mr-2"></i>Asosiy ma'lumotlar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="name">To'liq nomi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" value="{{organization.name}}" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="short_name">Qisqacha nomi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="short_name" value="{{organization.short_name}}" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="organization_type">Tashkilot turi <span class="text-danger">*</span></label>
+                        <select name="organization_type" class="form-control" required>
+                            {% for type in organization_types %}
+                            <option value="{{type.0}}" {% if type.0 == organization.organization_type %}selected{% endif %}>{{type.1}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Rasmiy ma'lumotlar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-file-alt mr-2"></i>Rasmiy ma'lumotlar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="inn">INN <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="inn" value="{{organization.inn}}" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="oked">OKED</label>
+                        <input type="text" class="form-control" name="oked" value="{{organization.oked}}">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="mfo">MFO</label>
+                        <input type="text" class="form-control" name="mfo" value="{{organization.mfo}}">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="account_number">Hisob raqam</label>
+                        <input type="text" class="form-control" name="account_number" value="{{organization.account_number}}">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Manzil va aloqa -->
+                <h5 class="text-primary mb-3"><i class="fas fa-map-marker-alt mr-2"></i>Manzil va aloqa</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="legal_address">Yuridik manzil <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="legal_address" rows="2" required>{{organization.legal_address}}</textarea>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="actual_address">Haqiqiy manzil</label>
+                        <textarea class="form-control" name="actual_address" rows="2">{{organization.actual_address}}</textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="phone">Telefon <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="phone" value="{{organization.phone}}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" name="email" value="{{organization.email}}">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Mas'ul shaxslar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-user-tie mr-2"></i>Mas'ul shaxslar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="director_name">Direktor F.I.O. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="director_name" value="{{organization.director_name}}" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="director_phone">Direktor telefoni</label>
+                        <input type="text" class="form-control" name="director_phone" value="{{organization.director_phone}}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="responsible_person">Mas'ul shaxs F.I.O. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="responsible_person" value="{{organization.responsible_person}}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="responsible_position">Mas'ul shaxs lavozimi</label>
+                        <input type="text" class="form-control" name="responsible_position" value="{{organization.responsible_position}}">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="responsible_phone">Mas'ul shaxs telefoni</label>
+                        <input type="text" class="form-control" name="responsible_phone" value="{{organization.responsible_phone}}">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Qo'shimcha -->
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="notes">Izohlar</label>
+                        <textarea class="form-control" name="notes" rows="3">{{organization.notes}}</textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success font-weight-bold">
+                    <i class="fas fa-save mr-2"></i>Saqlash
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

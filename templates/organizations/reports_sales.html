@@ -1,0 +1,185 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+{% block title %}Savdo hisoboti{% endblock title %}
+
+{% block stylesheets %}
+<link href="{% static 'vendor/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
+{% endblock stylesheets %}
+
+{% block heading %}Savdo hisoboti{% endblock heading %}
+
+{% block content %}
+
+<!-- Orqaga -->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:reports_dashboard' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Dashboard
+        </button>
+    </a>
+</div>
+
+<!-- Filtrlar -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Filtrlar</h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="form-inline">
+            <div class="form-group mr-3">
+                <label class="mr-2">Boshlanish:</label>
+                <input type="date" class="form-control" name="start_date" value="{{start_date}}">
+            </div>
+            <div class="form-group mr-3">
+                <label class="mr-2">Tugash:</label>
+                <input type="date" class="form-control" name="end_date" value="{{end_date}}">
+            </div>
+            <div class="form-group mr-3">
+                <label class="mr-2">Tashkilot:</label>
+                <select class="form-control" name="organization">
+                    <option value="">Barchasi</option>
+                    {% for org in organizations %}
+                    <option value="{{org.id}}" {% if selected_org == org.id|stringformat:"s" %}selected{% endif %}>
+                        {{org.short_name}}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search mr-2"></i>Qidirish
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Statistika -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Jami yuk xatlari</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_count}}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Umumiy summa</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_amount|floatformat:0}} so'm</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            To'langan</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_paid|floatformat:0}} so'm</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Qarz</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{total_debt|floatformat:0}} so'm</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Jadval -->
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Yuk xatlari</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Raqami</th>
+                        <th>Sana</th>
+                        <th>Tashkilot</th>
+                        <th>Summa</th>
+                        <th>To'langan</th>
+                        <th>Qarz</th>
+                        <th>Holat</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for dn in delivery_notes %}
+                    <tr>
+                        <td>{{forloop.counter}}</td>
+                        <td><a href="{% url 'organizations:delivery_notes_detail' dn.id %}">{{dn.number}}</a></td>
+                        <td>{{dn.date|date:"d.m.Y"}}</td>
+                        <td>{{dn.organization.short_name}}</td>
+                        <td>{{dn.total_amount|floatformat:0}} so'm</td>
+                        <td>{{dn.paid_amount|floatformat:0}} so'm</td>
+                        <td>{{dn.get_remaining_amount|floatformat:0}} so'm</td>
+                        <td>
+                            {% if dn.payment_status == 'PAID' %}
+                            <span class="badge badge-success">To'langan</span>
+                            {% elif dn.payment_status == 'PARTIAL' %}
+                            <span class="badge badge-warning">Qisman</span>
+                            {% else %}
+                            <span class="badge badge-danger">To'lanmagan</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script src="{% static 'vendor/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'vendor/datatables/dataTables.bootstrap4.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    $('#dataTable').DataTable();
+});
+</script>
+{% endblock javascripts %}

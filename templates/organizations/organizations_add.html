@@ -1,0 +1,144 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Tashkilot qo'shish{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Yangi tashkilot qo'shish{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:organizations_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <div class="card col-md-12">
+        <div class="card-body">
+            <form action="{% url 'organizations:organizations_add' %}" method="post">
+                {% csrf_token %}
+                
+                <!-- Asosiy ma'lumotlar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-info-circle mr-2"></i>Asosiy ma'lumotlar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="name">To'liq nomi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="25-son umumta'lim maktabi" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="short_name">Qisqacha nomi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="short_name" placeholder="25-maktab" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="organization_type">Tashkilot turi <span class="text-danger">*</span></label>
+                        <select name="organization_type" class="form-control" required>
+                            <option value="" selected disabled>Tanlang...</option>
+                            {% for type in organization_types %}
+                            <option value="{{type.0}}">{{type.1}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Rasmiy ma'lumotlar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-file-alt mr-2"></i>Rasmiy ma'lumotlar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label for="inn">INN <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="inn" placeholder="123456789" required>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="oked">OKED</label>
+                        <input type="text" class="form-control" name="oked" placeholder="85100">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="mfo">MFO</label>
+                        <input type="text" class="form-control" name="mfo" placeholder="00014">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="account_number">Hisob raqam</label>
+                        <input type="text" class="form-control" name="account_number" placeholder="40204000000000001234">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Manzil va aloqa -->
+                <h5 class="text-primary mb-3"><i class="fas fa-map-marker-alt mr-2"></i>Manzil va aloqa</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="legal_address">Yuridik manzil <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="legal_address" rows="2" placeholder="Toshkent shahar, Yunusobod tumani..." required></textarea>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="actual_address">Haqiqiy manzil</label>
+                        <textarea class="form-control" name="actual_address" rows="2" placeholder="Agar yuridik manzildan farq qilsa..."></textarea>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="phone">Telefon <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="phone" placeholder="+998 71 234 56 78" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="email">Email</label>
+                        <input type="email" class="form-control" name="email" placeholder="school25@edu.uz">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Mas'ul shaxslar -->
+                <h5 class="text-primary mb-3"><i class="fas fa-user-tie mr-2"></i>Mas'ul shaxslar</h5>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="director_name">Direktor F.I.O. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="director_name" placeholder="Rahimov Bobur Akramovich" required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="director_phone">Direktor telefoni</label>
+                        <input type="text" class="form-control" name="director_phone" placeholder="+998 90 123 45 67">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label for="responsible_person">Mas'ul shaxs F.I.O. <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="responsible_person" placeholder="Karimov Ali Valijon o'g'li" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="responsible_position">Mas'ul shaxs lavozimi</label>
+                        <input type="text" class="form-control" name="responsible_position" placeholder="Xo'jalik bo'limi boshlig'i">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="responsible_phone">Mas'ul shaxs telefoni</label>
+                        <input type="text" class="form-control" name="responsible_phone" placeholder="+998 91 234 56 78">
+                    </div>
+                </div>
+
+                <hr>
+
+                <!-- Qo'shimcha -->
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="notes">Izohlar</label>
+                        <textarea class="form-control" name="notes" rows="3" placeholder="Qo'shimcha ma'lumotlar..."></textarea>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success font-weight-bold">
+                    <i class="fas fa-save mr-2"></i>Tashkilot yaratish
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

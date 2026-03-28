@@ -1,0 +1,271 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Yuk xati №{{delivery_note.number}}{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Yuk xati tafsilotlari{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:delivery_notes_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+    <a href="{% url 'organizations:delivery_note_pdf' delivery_note.id %}" target="_blank" class="ml-2">
+        <button type="button" class="btn btn-primary font-weight-bold">
+            <i class="fas fa-file-pdf mr-2"></i>
+            PDF chiqarish
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Asosiy ma'lumotlar -->
+    <div class="col-md-8">
+        <!-- Yuk xati ma'lumotlari -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-file-alt mr-2"></i>Yuk xati №{{delivery_note.number}}
+                </h6>
+                {% if delivery_note.payment_status == 'PAID' %}
+                <span class="badge badge-success">To'langan</span>
+                {% elif delivery_note.payment_status == 'PARTIAL' %}
+                <span class="badge badge-warning">Qisman to'langan</span>
+                {% else %}
+                <span class="badge badge-danger">To'lanmagan</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Raqami:</strong> №{{delivery_note.number}}</p>
+                        <p><strong>Sana:</strong> {{delivery_note.date|date:"d.m.Y"}}</p>
+                        <p><strong>Tashkilot:</strong><br>
+                            <a href="{% url 'organizations:organizations_detail' delivery_note.organization.id %}">
+                                {{delivery_note.organization.short_name}}
+                            </a>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        {% if delivery_note.contract %}
+                        <p><strong>Shartnoma:</strong><br>
+                            <a href="{% url 'organizations:contracts_detail' delivery_note.contract.id %}">
+                                №{{delivery_note.contract.number}}
+                            </a>
+                        </p>
+                        {% endif %}
+                        <p><strong>Yaratgan xodim:</strong> {{delivery_note.created_by.username|default:"—"}}</p>
+                        <p><strong>Yaratilgan:</strong> {{delivery_note.created_date|date:"d.m.Y H:i"}}</p>
+                    </div>
+                </div>
+
+                {% if delivery_note.notes %}
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <p><strong>Izohlar:</strong><br>{{delivery_note.notes}}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Mahsulotlar -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-box mr-2"></i>Mahsulotlar
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th style="width:5%">#</th>
+                                <th style="width:30%">Mahsulot</th>
+                                <th style="width:20%">Seriya raqami</th>
+                                <th style="width:10%">Miqdori</th>
+                                <th style="width:15%">Narxi</th>
+                                <th style="width:20%">Jami</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detail in details %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td>{{detail.product_name}}</td>
+                                <td>{{detail.serial_number|default:"—"}}</td>
+                                <td class="text-center">{{detail.quantity}}</td>
+                                <td class="text-right">{{detail.price|floatformat:0}} so'm</td>
+                                <td class="text-right"><strong>{{detail.total|floatformat:0}} so'm</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-right"><strong>JAMI:</strong></td>
+                                <td class="text-right"><strong>{{delivery_note.total_amount|floatformat:0}} so'm</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- To'lovlar tarixi -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-money-bill-wave mr-2"></i>To'lovlar tarixi
+                </h6>
+                {% if delivery_note.payment_status != 'PAID' %}
+                <a href="{% url 'organizations:payment_add' delivery_note.id %}">
+                    <button type="button" class="btn btn-success btn-sm">
+                        <i class="fas fa-plus mr-1"></i>To'lov qo'shish
+                    </button>
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Sana</th>
+                                <th>Summa</th>
+                                <th>Hujjat</th>
+                                <th>Xodim</th>
+                                <th class="text-center">Amal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td>{{payment.payment_date|date:"d.m.Y"}}</td>
+                                <td><strong>{{payment.amount|floatformat:0}} so'm</strong></td>
+                                <td>{{payment.payment_document|default:"—"}}</td>
+                                <td>{{payment.created_by.username|default:"—"}}</td>
+                                <td class="text-center">
+                                    <a href="{% url 'organizations:payment_delete' payment.id %}" 
+                                       onclick="return confirm('Haqiqatan ham ushbu to\'lovni o\'chirmoqchimisiz?')">
+                                        <button type="button" class="btn btn-danger btn-sm">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">To'lovlar yo'q</p>
+                {% if delivery_note.payment_status != 'PAID' %}
+                <div class="text-center">
+                    <a href="{% url 'organizations:payment_add' delivery_note.id %}">
+                        <button type="button" class="btn btn-success">
+                            <i class="fas fa-plus mr-2"></i>Birinchi to'lovni qo'shing
+                        </button>
+                    </a>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- O'ng panel -->
+    <div class="col-md-4">
+        <!-- Tashkilot ma'lumotlari -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-building mr-2"></i>Tashkilot
+                </h6>
+            </div>
+            <div class="card-body">
+                <h6><strong>{{delivery_note.organization.short_name}}</strong></h6>
+                <p class="mb-2"><small>{{delivery_note.organization.name}}</small></p>
+                <hr>
+                <p><strong>INN:</strong> {{delivery_note.organization.inn}}</p>
+                <p><strong>Telefon:</strong> {{delivery_note.organization.phone}}</p>
+                <p><strong>Manzil:</strong><br>{{delivery_note.organization.get_full_address}}</p>
+                <hr>
+                <p><strong>Mas'ul shaxs:</strong><br>{{delivery_note.organization.responsible_person}}</p>
+                {% if delivery_note.organization.responsible_phone %}
+                <p><strong>Telefon:</strong> {{delivery_note.organization.responsible_phone}}</p>
+                {% endif %}
+                <a href="{% url 'organizations:organizations_detail' delivery_note.organization.id %}" class="btn btn-sm btn-primary btn-block mt-3">
+                    <i class="fas fa-eye mr-2"></i>Tashkilot tafsilotlari
+                </a>
+            </div>
+        </div>
+
+        <!-- To'lov holati -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-dollar-sign mr-2"></i>To'lov holati
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <p><strong>Umumiy summa:</strong><br>
+                        <span class="h5 text-primary">{{delivery_note.total_amount|floatformat:0}} so'm</span>
+                    </p>
+                    <p><strong>To'langan:</strong><br>
+                        <span class="h5 text-success">{{delivery_note.paid_amount|floatformat:0}} so'm</span>
+                    </p>
+                    <p><strong>Qarz:</strong><br>
+                        <span class="h5 text-danger">{{delivery_note.get_remaining_amount|floatformat:0}} so'm</span>
+                    </p>
+                </div>
+
+                <hr>
+
+                {% if delivery_note.payment_status == 'PAID' %}
+                <div class="text-center">
+                    <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                    <h5 class="text-success">To'liq to'langan</h5>
+                </div>
+                {% elif delivery_note.payment_status == 'PARTIAL' %}
+                <div class="text-center">
+                    <i class="fas fa-exclamation-circle fa-3x text-warning mb-3"></i>
+                    <h5 class="text-warning">Qisman to'langan</h5>
+                    <p class="text-muted">{{delivery_note.paid_amount|floatformat:0}} / {{delivery_note.total_amount|floatformat:0}} so'm</p>
+                </div>
+                {% else %}
+                <div class="text-center">
+                    <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                    <h5 class="text-danger">To'lanmagan</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Statistika -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-chart-bar mr-2"></i>Statistika
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Mahsulotlar:</strong> {{details.count}} xil</p>
+                <p><strong>Jami dona:</strong> {% widthratio details|length 1 1 %} ta</p>
+                <p><strong>To'lovlar:</strong> {{payments.count}} ta</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

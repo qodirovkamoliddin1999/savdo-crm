@@ -1,0 +1,386 @@
+{% extends "pos/base.html" %}
+{% load static %}
+
+{% block title %}Yuk xati yaratish{% endblock title %}
+
+{% block stylesheets %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock stylesheets %}
+
+{% block heading %}Yangi yuk xati yaratish{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:delivery_notes_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<form id="deliveryNoteForm" method="post">
+    {% csrf_token %}
+    <div class="row">
+        <!-- Mahsulotlar qismi -->
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-box mr-2"></i>Mahsulotlar
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Barcode skanerlash -->
+                    <div class="form-group">
+                        <label>Barcode skanerlash:</label>
+                        <div class="input-group">
+                            <input type="text" id="barcodeInput" class="form-control" placeholder="Barcode skanerlang yoki kiriting...">
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-primary" id="scanBarcodeBtn">
+                                    <i class="fas fa-search"></i> Qidirish
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Barcode skanerdan foydalaning yoki qo'lda kiriting</small>
+                    </div>
+
+                    <div class="text-center my-2">
+                        <strong>YOKi</strong>
+                    </div>
+
+                    <!-- Mahsulot qidirish -->
+                    <div class="form-group">
+                        <label>Mahsulot qidirish:</label>
+                        <select id="productSearch" class="form-control select2" style="width: 100%;">
+                            <option value="">Mahsulotni tanlang...</option>
+                            {% for product in products %}
+                            <option value="{{product.id}}" 
+                                    data-name="{{product.name}}" 
+                                    data-price="{{product.price}}"
+                                    data-quantity="{{product.quantity}}">
+                                {{product.name}} (Omborda: {{product.quantity}} dona, Narxi: {{product.price}} so'm)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Mahsulotlar jadvali -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="productsTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:5%">#</th>
+                                    <th style="width:30%">Mahsulot</th>
+                                    <th style="width:20%">Seriya raqami</th>
+                                    <th style="width:10%">Miqdori</th>
+                                    <th style="width:15%">Narxi</th>
+                                    <th style="width:15%">Jami</th>
+                                    <th style="width:5%">O'chirish</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <!-- JavaScript orqali qo'shiladi -->
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-right"><strong>JAMI:</strong></td>
+                                    <td><strong id="totalAmount">0 so'm</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yuk xati ma'lumotlari -->
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-file-alt mr-2"></i>Yuk xati ma'lumotlari
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Sana <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="date" value="{% now 'Y-m-d' %}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tashkilot <span class="text-danger">*</span></label>
+                        <select name="organization" id="organizationSelect" class="form-control" required>
+                            <option value="">Tanlang...</option>
+                            {% for org in organizations %}
+                            <option value="{{org.id}}">{{org.short_name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shartnoma (ixtiyoriy)</label>
+                        <select name="contract" id="contractSelect" class="form-control">
+                            <option value="">Shartnoma yo'q</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Izohlar</label>
+                        <textarea name="notes" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-info">
+                        <strong>Raqam:</strong> Avtomatik yaratiladi<br>
+                        <strong>Xodim:</strong> {{request.user.username}}
+                    </div>
+
+                    <input type="hidden" name="products_json" id="productsJson">
+                    
+                    <button type="submit" class="btn btn-success btn-block font-weight-bold">
+                        <i class="fas fa-save mr-2"></i>Yuk xati yaratish
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Select2 initialization
+    $('.select2').select2({
+        placeholder: 'Mahsulotni tanlang...',
+        allowClear: true
+    });
+
+    let products = [];
+    let productCounter = 0;
+
+    // Barcode skanerlash
+    $('#scanBarcodeBtn').on('click', function() {
+        searchByBarcode();
+    });
+
+    $('#barcodeInput').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            searchByBarcode();
+        }
+    });
+
+    function searchByBarcode() {
+        const barcode = $('#barcodeInput').val().trim();
+        
+        if (!barcode) {
+            alert('Barcode kiriting!');
+            return;
+        }
+
+        // AJAX orqali barcode qidirish
+        $.ajax({
+            url: "{% url 'organizations:barcode_search' %}",
+            method: 'GET',
+            data: { barcode: barcode },
+            success: function(response) {
+                if (response.success) {
+                    const product = response.product;
+                    
+                    // Mahsulot allaqachon qo'shilganmi tekshirish
+                    const existingProduct = products.find(p => p.product_id == product.id);
+                    if (existingProduct) {
+                        alert('Bu mahsulot allaqachon qo\'shilgan!');
+                        $('#barcodeInput').val('').focus();
+                        return;
+                    }
+
+                    if (product.quantity <= 0) {
+                        alert('Bu mahsulot omborda yo\'q!');
+                        $('#barcodeInput').val('').focus();
+                        return;
+                    }
+
+                    // Mahsulotni qo'shish
+                    productCounter++;
+                    const newProduct = {
+                        id: productCounter,
+                        product_id: product.id,
+                        name: product.name,
+                        serial_number: product.internal_code || '',
+                        quantity: 1,
+                        price: product.price,
+                        total: product.price
+                    };
+
+                    products.push(newProduct);
+                    addProductRow(newProduct);
+                    updateTotal();
+                    
+                    $('#barcodeInput').val('').focus();
+                    
+                    // Success tovush (ixtiyoriy)
+                    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVqzn77BdGAg+ltryxnMpBSuBzvLaiTcIGWi77eefTRAMUKfj8LZjHAY4ktfyy3ksBSR3x/DdkEAKFF606+uoVRQKRp/g8r5sIQUxh9Hz04IzBh5uwO/jmUgND1as5++wXRgIPpba8sZzKQUrgc7y2ok3CBlou+3nn00QDFCn4/C2YxwGOJLX8st5LAUkd8fw3ZBACxVftOvqqFUUCkef4PK+bCEFMYfR89OCMwYebs');
+                    audio.play().catch(e => console.log('Audio play failed'));
+                } else {
+                    alert(response.message || 'Barcode topilmadi!');
+                    $('#barcodeInput').val('').focus();
+                }
+            },
+            error: function() {
+                alert('Xatolik yuz berdi!');
+                $('#barcodeInput').val('').focus();
+            }
+        });
+    }
+
+    // Mahsulot qo'shish
+    $('#productSearch').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const productId = selectedOption.val();
+        
+        if (!productId) return;
+
+        const productName = selectedOption.data('name');
+        const productPrice = selectedOption.data('price');
+        const availableQty = selectedOption.data('quantity');
+
+        if (availableQty <= 0) {
+            alert('Bu mahsulot omborda yo\'q!');
+            $(this).val('').trigger('change');
+            return;
+        }
+
+        // Mahsulot allaqachon qo'shilganmi tekshirish
+        const existingProduct = products.find(p => p.product_id == productId);
+        if (existingProduct) {
+            alert('Bu mahsulot allaqachon qo\'shilgan!');
+            $(this).val('').trigger('change');
+            return;
+        }
+
+        productCounter++;
+        const product = {
+            id: productCounter,
+            product_id: productId,
+            name: productName,
+            serial_number: '',
+            quantity: 1,
+            price: productPrice,
+            total: productPrice
+        };
+
+        products.push(product);
+        addProductRow(product);
+        updateTotal();
+        
+        $(this).val('').trigger('change');
+    });
+
+    // Mahsulot qatorini qo'shish
+    function addProductRow(product) {
+        const row = `
+            <tr data-id="${product.id}">
+                <td>${product.id}</td>
+                <td>${product.name}</td>
+                <td>
+                    <input type="text" class="form-control form-control-sm serial-input" 
+                           data-id="${product.id}" placeholder="IP-2024-001">
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm quantity-input" 
+                           data-id="${product.id}" value="${product.quantity}" min="1">
+                </td>
+                <td>${formatNumber(product.price)} so'm</td>
+                <td class="total-cell">${formatNumber(product.total)} so'm</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm delete-product" data-id="${product.id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+        $('#productsTableBody').append(row);
+    }
+
+    // Miqdor o'zgarganda
+    $(document).on('input', '.quantity-input', function() {
+        const id = $(this).data('id');
+        const quantity = parseInt($(this).val()) || 1;
+        
+        const product = products.find(p => p.id == id);
+        if (product) {
+            product.quantity = quantity;
+            product.total = product.quantity * product.price;
+            
+            $(this).closest('tr').find('.total-cell').text(formatNumber(product.total) + ' so\'m');
+            updateTotal();
+        }
+    });
+
+    // Seriya raqami o'zgarganda
+    $(document).on('input', '.serial-input', function() {
+        const id = $(this).data('id');
+        const serialNumber = $(this).val();
+        
+        const product = products.find(p => p.id == id);
+        if (product) {
+            product.serial_number = serialNumber;
+        }
+    });
+
+    // Mahsulotni o'chirish
+    $(document).on('click', '.delete-product', function() {
+        const id = $(this).data('id');
+        products = products.filter(p => p.id != id);
+        $(this).closest('tr').remove();
+        updateTotal();
+    });
+
+    // Umumiy summani yangilash
+    function updateTotal() {
+        const total = products.reduce((sum, p) => sum + p.total, 0);
+        $('#totalAmount').text(formatNumber(total) + ' so\'m');
+    }
+
+    // Sonni formatlash
+    function formatNumber(num) {
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    }
+
+    // Tashkilot o'zgarganda shartnomalarni yuklash
+    $('#organizationSelect').on('change', function() {
+        const orgId = $(this).val();
+        $('#contractSelect').html('<option value="">Yuklanmoqda...</option>');
+        
+        if (!orgId) {
+            $('#contractSelect').html('<option value="">Shartnoma yo\'q</option>');
+            return;
+        }
+
+        // AJAX orqali shartnomalarni yuklash (keyinroq qo'shamiz)
+        $('#contractSelect').html('<option value="">Shartnoma yo\'q</option>');
+    });
+
+    // Forma yuborilganda
+    $('#deliveryNoteForm').on('submit', function(e) {
+        if (products.length === 0) {
+            e.preventDefault();
+            alert('Kamida bitta mahsulot qo\'shing!');
+            return false;
+        }
+
+        // Mahsulotlarni JSON formatda saqlash
+        $('#productsJson').val(JSON.stringify(products));
+    });
+});
+</script>
+{% endblock javascripts %}

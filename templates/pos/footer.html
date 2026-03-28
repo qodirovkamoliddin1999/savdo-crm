@@ -1,0 +1,15 @@
+{% load static %}
+
+<footer class="sticky-footer bg-white">
+    <div class="container my-auto">
+        <div class="copyright text-center my-auto">
+            <span>Copyright &copy; Kamoliddin Qodirov <span id="year"></span></span>
+        </div>
+    </div>
+</footer>
+
+<script>
+    const yearEl = document.getElementById('year');
+    const date = new Date();
+    yearEl.innerText = date.getFullYear();
+</script>

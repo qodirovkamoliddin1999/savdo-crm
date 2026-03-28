@@ -1,0 +1,83 @@
+{% extends "pos/base.html" %}
+
+{% block title %}To'lov qo'shish{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}To'lov qo'shish{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:delivery_notes_detail' delivery_note.id %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-money-bill-wave mr-2"></i>Yangi to'lov qo'shish
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Yuk xati ma'lumotlari -->
+                <div class="alert alert-info">
+                    <h6><strong>Yuk xati №{{delivery_note.number}}</strong></h6>
+                    <hr>
+                    <p class="mb-1"><strong>Tashkilot:</strong> {{delivery_note.organization.short_name}}</p>
+                    <p class="mb-1"><strong>Umumiy summa:</strong> {{delivery_note.total_amount|floatformat:0}} so'm</p>
+                    <p class="mb-1"><strong>To'langan:</strong> {{delivery_note.paid_amount|floatformat:0}} so'm</p>
+                    <p class="mb-0"><strong>Qarz:</strong> <span class="text-danger">{{remaining_amount|floatformat:0}} so'm</span></p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label>To'lov sanasi <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" name="payment_date" value="{% now 'Y-m-d' %}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Summa (so'm) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control" name="amount" 
+                               placeholder="{{remaining_amount|floatformat:0}}" 
+                               max="{{remaining_amount}}" required>
+                        <small class="form-text text-muted">Maksimal: {{remaining_amount|floatformat:0}} so'm</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>To'lov hujjati</label>
+                        <input type="text" class="form-control" name="payment_document" placeholder="PP-12345">
+                        <small class="form-text text-muted">Pul o'tkazish hujjati raqami</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Izohlar</label>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="Qo'shimcha ma'lumotlar..."></textarea>
+                    </div>
+
+                    <hr>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Eslatma:</strong> To'lov qo'shilgandan so'ng yuk xati to'lov holati avtomatik yangilanadi.
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block font-weight-bold">
+                        <i class="fas fa-save mr-2"></i>To'lov qo'shish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

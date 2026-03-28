@@ -1,0 +1,309 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Mahsulot qabul qilish{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Mahsulot qabul qilish (Kirish){% endblock heading %}
+
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:warehouse_inventory' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Ombor
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Yangi mahsulot -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-plus-circle mr-2"></i>Yangi mahsulot qo'shish
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label>Mahsulot nomi <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tavsif</label>
+                        <textarea class="form-control" name="description" rows="2"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Kategoriya <span class="text-danger">*</span></label>
+                        <select class="form-control" name="category" required>
+                            <option value="">Tanlang...</option>
+                            {% for cat in categories %}
+                            <option value="{{cat.id}}">{{cat.name}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Narxi (so'm) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" class="form-control" name="price" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Miqdor (dona) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="quantity" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Shtrix-kod (ixtiyoriy)</label>
+                        <input type="text" class="form-control" name="barcode" placeholder="1234567890123">
+                        <small class="form-text text-muted">Shtrix-kod kiritish shart emas</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-success btn-block font-weight-bold">
+                        <i class="fas fa-save mr-2"></i>Yangi mahsulot qo'shish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Barcode bilan qabul qilish -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-warning text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-barcode mr-2"></i>Barcode bilan qabul qilish
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label>Barcode <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="barcode" id="barcodeInput" placeholder="Bar kodni skanerlang yoki kiriting..." required>
+                            <div class="input-group-append">
+                                <button type="button" class="btn btn-warning" id="clearBarcode">
+                                    <i class="fas fa-times"></i> Tozalash
+                                </button>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Bar kod skanerini ishlating yoki raqamlarni qo'lda kiriting</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Miqdor (dona) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="quantity" value="1" required>
+                    </div>
+
+                    <div id="barcodeProductInfo" class="alert alert-info" style="display:none;">
+                        <p class="mb-1"><strong>Mahsulot:</strong> <span id="barcodeProductName">-</span></p>
+                        <p class="mb-1"><strong>Hozirgi miqdor:</strong> <span id="barcodeCurrentQty">0</span> dona</p>
+                        <p class="mb-0"><strong>Narxi:</strong> <span id="barcodePrice">0</span> so'm</p>
+                    </div>
+
+                    <div id="barcodeNewTotal" class="alert alert-success" style="display:none;">
+                        <strong>Qo'shilgandan keyin:</strong> <span id="barcodeTotalQty">0</span> dona
+                    </div>
+
+                    <button type="submit" class="btn btn-warning btn-block font-weight-bold">
+                        <i class="fas fa-barcode mr-2"></i>Barcode bilan qo'shish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mavjud mahsulotga qo'shish -->
+    <div class="col-lg-6 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-box mr-2"></i>Mavjud mahsulotga qo'shish
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label>Mahsulotni tanlang <span class="text-danger">*</span></label>
+                        <select class="form-control" name="product_id" id="productSelect" required>
+                            <option value="">Mahsulotni tanlang...</option>
+                            {% for product in products %}
+                            <option value="{{product.id}}" 
+                                    data-quantity="{{product.quantity}}"
+                                    data-price="{{product.price}}">
+                                {{product.name}} (Omborda: {{product.quantity}} dona)
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div id="productInfo" class="alert alert-info" style="display:none;">
+                        <p class="mb-1"><strong>Hozirgi miqdor:</strong> <span id="currentQty">0</span> dona</p>
+                        <p class="mb-0"><strong>Narxi:</strong> <span id="currentPrice">0</span> so'm</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Qo'shiladigan miqdor (dona) <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" name="quantity" id="addQuantity" required>
+                    </div>
+
+                    <div id="newTotal" class="alert alert-success" style="display:none;">
+                        <strong>Yangi jami:</strong> <span id="totalQty">0</span> dona
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-block font-weight-bold">
+                        <i class="fas fa-plus mr-2"></i>Miqdorni qo'shish
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Ma'lumot -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-info-circle mr-2"></i>Ma'lumot
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Yangi mahsulot:</strong></p>
+                <ul>
+                    <li>Yangi mahsulot yaratiladi</li>
+                    <li>Barcha ma'lumotlar kiritilishi kerak</li>
+                </ul>
+                <hr>
+                <p><strong>Mavjud mahsulotga qo'shish:</strong></p>
+                <ul>
+                    <li>Mavjud mahsulot tanlanadi</li>
+                    <li>Faqat miqdor qo'shiladi</li>
+                    <li>Narx o'zgarmaydi</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Mahsulot tanlash funksiyasi
+    $('#productSelect').on('change', function() {
+        const selectedOption = $(this).find('option:selected');
+        const quantity = selectedOption.data('quantity');
+        const price = selectedOption.data('price');
+        
+        if ($(this).val()) {
+            $('#currentQty').text(quantity);
+            $('#currentPrice').text(price.toLocaleString());
+            $('#productInfo').show();
+            
+            // Miqdor o'zgarganda yangi jamni hisoblash
+            $('#addQuantity').on('input', function() {
+                const addQty = parseInt($(this).val()) || 0;
+                const newTotal = quantity + addQty;
+                $('#totalQty').text(newTotal);
+                $('#newTotal').show();
+            });
+        } else {
+            $('#productInfo').hide();
+            $('#newTotal').hide();
+        }
+    });
+    
+    // Barcode skanerlash funksiyasi
+    let barcodeTimeout;
+    
+    $('#barcodeInput').on('input', function() {
+        const barcode = $(this).val().trim();
+        
+        // Timeoutni tozalash
+        clearTimeout(barcodeTimeout);
+        
+        if (barcode.length >= 8) { // Minimal barcode uzunligi
+            barcodeTimeout = setTimeout(function() {
+                searchBarcode(barcode);
+            }, 500); // 500ms kutish
+        }
+    });
+    
+    // Enter tugmasi bilan qidirish
+    $('#barcodeInput').keypress(function(e) {
+        if (e.which == 13) {
+            e.preventDefault();
+            const barcode = $(this).val().trim();
+            if (barcode) {
+                searchBarcode(barcode);
+            }
+        }
+    });
+    
+    // Tozalash tugmasi
+    $('#clearBarcode').click(function() {
+        $('#barcodeInput').val('');
+        $('#barcodeProductInfo').hide();
+        $('#barcodeNewTotal').hide();
+        $('#barcodeInput').focus();
+    });
+    
+    // Barcode qidirish funksiyasi
+    function searchBarcode(barcode) {
+        $.ajax({
+            url: "{% url 'organizations:barcode_search' %}",
+            type: "GET",
+            data: { barcode: barcode },
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    const product = response.product;
+                    $('#barcodeProductName').text(product.name);
+                    $('#barcodeCurrentQty').text(product.quantity);
+                    $('#barcodePrice').text(product.price.toLocaleString());
+                    
+                    // Miqdor o'zgarganda yangi jamni hisoblash
+                    const quantity = parseInt(product.quantity);
+                    $('input[name="quantity"]').on('input', function() {
+                        const addQty = parseInt($(this).val()) || 0;
+                        const newTotal = quantity + addQty;
+                        $('#barcodeTotalQty').text(newTotal);
+                        $('#barcodeNewTotal').show();
+                    });
+                    
+                    $('#barcodeProductInfo').show();
+                    $('#barcodeNewTotal').show();
+                    
+                    // Birinchi miqdor uchun jami hisoblash
+                    const addQty = parseInt($('input[name="quantity"]').val()) || 0;
+                    const newTotal = quantity + addQty;
+                    $('#barcodeTotalQty').text(newTotal);
+                    
+                } else {
+                    $('#barcodeProductInfo').hide();
+                    $('#barcodeNewTotal').hide();
+                    alert('Bar kod topilmadi: ' + response.message);
+                }
+            },
+            error: function(error) {
+                console.log("Barcode search error:", error);
+                $('#barcodeProductInfo').hide();
+                $('#barcodeNewTotal').hide();
+                alert('Bar kod qidirishda xatolik yuz berdi!');
+            }
+        });
+    }
+});
+</script>
+{% endblock javascripts %}

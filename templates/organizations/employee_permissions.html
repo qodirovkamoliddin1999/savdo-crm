@@ -1,0 +1,406 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Ruxsatlarni sozlash - {{employee.username}}{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Xodim ruxsatlari{% endblock heading %}
+
+{% block content %}
+
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'organizations:employees_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <!-- Xodim ma'lumotlari -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-primary text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-user mr-2"></i>{{employee.username}}
+                    {% if employee.is_superuser %}
+                    <span class="badge badge-danger ml-2">ADMIN</span>
+                    {% endif %}
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Ism:</strong> {{employee.first_name}} {{employee.last_name}}</p>
+                        <p><strong>Email:</strong> {{employee.email|default:"—"}}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Status:</strong> 
+                            {% if employee.is_active %}
+                            <span class="badge badge-success">Faol</span>
+                            {% else %}
+                            <span class="badge badge-secondary">Nofaol</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Ro'yxatdan o'tgan:</strong> {{employee.date_joined|date:"d.m.Y"}}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ruxsatlar -->
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Tashkilotlar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-building mr-2"></i>Tashkilotlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_organizations" 
+                                       name="can_view_organizations" {% if permissions.can_view_organizations %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_organizations">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_organizations" 
+                                       name="can_add_organizations" {% if permissions.can_add_organizations %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_organizations">Qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_organizations" 
+                                       name="can_edit_organizations" {% if permissions.can_edit_organizations %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_organizations">Tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_organizations" 
+                                       name="can_delete_organizations" {% if permissions.can_delete_organizations %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_organizations">O'chirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shartnomalar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-success">
+                                <i class="fas fa-file-contract mr-2"></i>Shartnomalar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_contracts" 
+                                       name="can_view_contracts" {% if permissions.can_view_contracts %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_contracts">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_contracts" 
+                                       name="can_add_contracts" {% if permissions.can_add_contracts %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_contracts">Qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_contracts" 
+                                       name="can_edit_contracts" {% if permissions.can_edit_contracts %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_contracts">Tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_contracts" 
+                                       name="can_delete_contracts" {% if permissions.can_delete_contracts %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_contracts">O'chirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Yuk xatlari -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-info">
+                                <i class="fas fa-file-alt mr-2"></i>Yuk xatlari
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_delivery_notes" 
+                                       name="can_view_delivery_notes" {% if permissions.can_view_delivery_notes %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_delivery_notes">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_delivery_notes" 
+                                       name="can_add_delivery_notes" {% if permissions.can_add_delivery_notes %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_delivery_notes">Yaratish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_delivery_notes" 
+                                       name="can_delete_delivery_notes" {% if permissions.can_delete_delivery_notes %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_delivery_notes">O'chirish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_print_delivery_notes" 
+                                       name="can_print_delivery_notes" {% if permissions.can_print_delivery_notes %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_print_delivery_notes">PDF chiqarish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mahsulotlar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-warning">
+                                <i class="fas fa-box mr-2"></i>Mahsulotlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_products" 
+                                       name="can_view_products" {% if permissions.can_view_products %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_products">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_products" 
+                                       name="can_add_products" {% if permissions.can_add_products %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_products">Qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_products" 
+                                       name="can_edit_products" {% if permissions.can_edit_products %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_products">Tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_products" 
+                                       name="can_delete_products" {% if permissions.can_delete_products %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_products">O'chirish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_prices" 
+                                       name="can_edit_prices" {% if permissions.can_edit_prices %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_prices">Narxlarni o'zgartirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- To'lovlar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-success">
+                                <i class="fas fa-money-bill-wave mr-2"></i>To'lovlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_payments" 
+                                       name="can_view_payments" {% if permissions.can_view_payments %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_payments">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_payments" 
+                                       name="can_add_payments" {% if permissions.can_add_payments %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_payments">Qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_payments" 
+                                       name="can_delete_payments" {% if permissions.can_delete_payments %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_payments">O'chirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hisobotlar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-danger">
+                                <i class="fas fa-chart-bar mr-2"></i>Hisobotlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_reports" 
+                                       name="can_view_reports" {% if permissions.can_view_reports %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_reports">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_export_reports" 
+                                       name="can_export_reports" {% if permissions.can_export_reports %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_export_reports">Eksport qilish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- POS va Savdo -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-info">
+                                <i class="fas fa-shopping-cart mr-2"></i>POS va Savdo
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_pos" 
+                                       name="can_view_pos" {% if permissions.can_view_pos %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_pos">POS panelini ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_sales" 
+                                       name="can_add_sales" {% if permissions.can_add_sales %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_sales">Savdo qilish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_sales" 
+                                       name="can_view_sales" {% if permissions.can_view_sales %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_sales">Savdlarni ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_sales" 
+                                       name="can_edit_sales" {% if permissions.can_edit_sales %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_sales">Savdoni tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_sales" 
+                                       name="can_delete_sales" {% if permissions.can_delete_sales %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_sales">Savdoni o'chirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mijozlar -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">
+                                <i class="fas fa-users mr-2"></i>Mijozlar
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_customers" 
+                                       name="can_view_customers" {% if permissions.can_view_customers %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_customers">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_customers" 
+                                       name="can_add_customers" {% if permissions.can_add_customers %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_customers">Qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_customers" 
+                                       name="can_edit_customers" {% if permissions.can_edit_customers %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_customers">Tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_customers" 
+                                       name="can_delete_customers" {% if permissions.can_delete_customers %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_customers">O'chirish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Qarz daftari -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-warning">
+                                <i class="fas fa-money-bill-wave mr-2"></i>Qarz daftari
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_debt" 
+                                       name="can_view_debt" {% if permissions.can_view_debt %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_debt">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_add_debt" 
+                                       name="can_add_debt" {% if permissions.can_add_debt %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_debt">Qarz qo'shish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_edit_debt" 
+                                       name="can_edit_debt" {% if permissions.can_edit_debt %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_edit_debt">Tahrirlash</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_delete_debt" 
+                                       name="can_delete_debt" {% if permissions.can_delete_debt %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_delete_debt">O'chirish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="can_add_debt_payments" 
+                                       name="can_add_debt_payments" {% if permissions.can_add_debt_payments %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_add_debt_payments">To'lov qilish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ombor (kengaytirilgan) -->
+                <div class="col-lg-6 mb-4">
+                    <div class="card shadow h-100">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-success">
+                                <i class="fas fa-warehouse mr-2"></i>Ombor boshqaruvi
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_view_warehouse" 
+                                       name="can_view_warehouse" {% if permissions.can_view_warehouse %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_view_warehouse">Ko'rish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_receive_warehouse" 
+                                       name="can_receive_warehouse" {% if permissions.can_receive_warehouse %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_receive_warehouse">Qabul qilish</label>
+                            </div>
+                            <div class="custom-control custom-checkbox mb-2">
+                                <input type="checkbox" class="custom-control-input" id="can_manage_barcodes" 
+                                       name="can_manage_barcodes" {% if permissions.can_manage_barcodes %}checked{% endif %}>
+                                <label class="custom-control-label" for="can_manage_barcodes">Barcodeni boshqarish</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Izohlar -->
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Izohlar</h6>
+                </div>
+                <div class="card-body">
+                    <textarea class="form-control" name="notes" rows="3" placeholder="Qo'shimcha ma'lumotlar...">{{permissions.notes}}</textarea>
+                </div>
+            </div>
+
+            <!-- Saqlash -->
+            <div class="text-center mb-4">
+                <button type="submit" class="btn btn-success btn-lg font-weight-bold">
+                    <i class="fas fa-save mr-2"></i>Ruxsatlarni saqlash
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock content %}
+
+{% block javascripts %}{% endblock javascripts %}

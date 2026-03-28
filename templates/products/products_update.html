@@ -1,0 +1,120 @@
+{% extends "pos/base.html" %}
+
+<!-- Page title  -->
+{% block title %}Mahsulotni tahrirlash{% endblock title %}
+
+<!-- Specific Page CSS goes HERE  -->
+{% block stylesheets %}{% endblock stylesheets %}
+
+<!-- Page Heading -->
+{% block heading %}Mahsulotni tahrirlash{% endblock heading %}
+
+<!-- Page content  -->
+{% block content %}
+<!--Go back-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'products:products_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <div class="card col-md-8">
+        <div class="card-body">
+            <form action="{% url 'products:products_update' product.id %}"  method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label for="inputDescription">Nomi</label>
+                        <input type="text" class="form-control" name="name" value="{{product.name}}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="state">Holati</label>
+                        <select name="state" class="form-control" required>
+                            {% for status in product_status %}
+                                {% if status.0 == product.status   %}
+                                <option value="{{status.0}}" selected>{{status.1}}</option>
+                                {% else %}
+                                <option value="{{status.0}}">{{status.1}}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label for="inputDescription">Tavsif</label>
+                        <input type="text" name="description" class="form-control" value="{{product.description}}" required>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label for="category">Kategoriya</label>
+                        <select name="category" class="form-control" required>
+                            <option value="" selected disabled hidden>Kategoriyani tanlang</option>
+                            {% for category in categories %}
+                                {% if product.category.id == category.id%}
+                                <option value="{{category.id}}" selected>{{category.name}}</option>
+                                {% else %}
+                                <option value="{{category.id}}">{{category.name}}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label for="inputPrice">Narxi</label>
+                        <input type="number" name="price" step="any"  class="form-control" value="{{product.price}}"  required>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label for="inputQuantity">Ombordagi miqdori</label>
+                        <input type="number" name="quantity" class="form-control" value="{{product.quantity}}" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="image">Mahsulot rasmi (ixtiyoriy)</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <small class="form-text text-muted">Rasm yuklash shart emas. Faqat JPG, PNG, GIF formatlar qabul qilinadi.</small>
+                        {% if product.image %}
+                        <div class="mt-2">
+                            <small>Hozirgi rasm:</small><br>
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" style="max-height: 100px; max-width: 200px;" class="img-thumbnail">
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-12">
+                        <label for="barcode">Shtrix-kod (ixtiyoriy)</label>
+                        <input type="text" name="barcode" class="form-control" value="{{ product.barcode|default:'' }}" placeholder="1234567890123">
+                        <small class="form-text text-muted">Shtrix-kod kiritish shart emas. Har bir mahsulotda unique bo'lishi kerak.</small>
+                        {% if product.barcode %}
+                        <div class="mt-2">
+                            <small>Hozirgi barcode:</small><br>
+                            <code>{{ product.barcode }}</code>
+                            <a href="{% url 'organizations:barcode_generate' product.id %}" class="ml-2">
+                                <button type="button" class="btn btn-sm btn-info">Qo'shimcha barcode</button>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+
+                <button type="submit" class="btn btn-success font-weight-bold">Mahsulotni yangilash</button>
+               
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+<!-- Specific Page JS goes HERE  -->
+{% block javascripts %}{% endblock javascripts %}

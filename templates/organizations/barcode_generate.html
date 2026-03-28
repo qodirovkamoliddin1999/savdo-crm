@@ -1,0 +1,175 @@
+{% extends "pos/base.html" %}
+
+{% block title %}Barcode yaratish - {{product.name}}{% endblock title %}
+
+{% block stylesheets %}{% endblock stylesheets %}
+
+{% block heading %}Barcode yaratish{% endblock heading %}
+
+{% block content %}
+<!--Orqaga-->
+<div class="row ml-0 mb-3">
+    <a href="{% url 'products:products_list' %}">
+        <button type="button" class="btn btn-info font-weight-bold">
+            <i class="fas fa-long-arrow-alt-left mr-2"></i>
+            Orqaga
+        </button>
+    </a>
+</div>
+
+<div class="row">
+    <!-- Barcode yaratish -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-barcode mr-2"></i>Yangi barcode yaratish
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <strong>Mahsulot:</strong> {{product.name}}<br>
+                    <strong>Narxi:</strong> {{product.price}} so'm<br>
+                    <strong>Omborda:</strong> {{product.quantity}} dona
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="form-group">
+                        <label>Barcode <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="barcode" id="barcodeInput" placeholder="2900000123456" required autofocus>
+                        <small class="form-text text-muted">13 yoki 8 raqamli barcode kiriting</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Ichki kod</label>
+                        <input type="text" class="form-control" name="internal_code" placeholder="IP-75-2024-001">
+                        <small class="form-text text-muted">Sizning ichki kodingiz (ixtiyoriy)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Izohlar</label>
+                        <textarea class="form-control" name="notes" rows="2" placeholder="Qo'shimcha ma'lumotlar..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-success font-weight-bold">
+                        <i class="fas fa-save mr-2"></i>Barcode yaratish
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="generateRandomBtn">
+                        <i class="fas fa-random mr-2"></i>Tasodifiy yaratish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mavjud barcode'lar -->
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-list mr-2"></i>Mavjud barcode'lar
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if existing_barcodes %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Barcode</th>
+                                <th>Ichki kod</th>
+                                <th>Sana</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bc in existing_barcodes %}
+                            <tr>
+                                <td>{{forloop.counter}}</td>
+                                <td><strong>{{bc.barcode}}</strong></td>
+                                <td>{{bc.internal_code|default:"—"}}</td>
+                                <td>{{bc.created_date|date:"d.m.Y"}}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-center text-muted">Barcode'lar yo'q</p>
+                <p class="text-center">
+                    <i class="fas fa-barcode fa-3x text-muted"></i>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Barcode namunasi -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-info-circle mr-2"></i>Barcode haqida
+                </h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Barcode turlari:</strong></p>
+                <ul>
+                    <li><strong>EAN-13:</strong> 13 raqamli (2900000123456)</li>
+                    <li><strong>EAN-8:</strong> 8 raqamli (29000123)</li>
+                    <li><strong>UPC:</strong> 12 raqamli (290001234567)</li>
+                </ul>
+                <hr>
+                <p><strong>Maslahat:</strong></p>
+                <ul>
+                    <li>Barcode skanerdan foydalaning</li>
+                    <li>Yoki qo'lda kiriting</li>
+                    <li>Tasodifiy barcode yaratish mumkin</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block javascripts %}
+<script>
+$(document).ready(function() {
+    // Tasodifiy barcode yaratish
+    $('#generateRandomBtn').on('click', function() {
+        // EAN-13 formatida tasodifiy barcode yaratish
+        const prefix = '290'; // O'zbekiston prefiksi
+        let randomPart = '';
+        for (let i = 0; i < 9; i++) {
+            randomPart += Math.floor(Math.random() * 10);
+        }
+        
+        // Checksum hisoblash (soddalashtirilgan)
+        const barcode = prefix + randomPart;
+        const checksum = calculateEAN13Checksum(barcode);
+        const fullBarcode = barcode + checksum;
+        
+        $('#barcodeInput').val(fullBarcode);
+    });
+
+    // EAN-13 checksum hisoblash
+    function calculateEAN13Checksum(barcode) {
+        let sum = 0;
+        for (let i = 0; i < 12; i++) {
+            const digit = parseInt(barcode[i]);
+            sum += (i % 2 === 0) ? digit : digit * 3;
+        }
+        const checksum = (10 - (sum % 10)) % 10;
+        return checksum;
+    }
+
+    // Enter tugmasi bosilganda formani yuborish
+    $('#barcodeInput').on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $(this).closest('form').submit();
+        }
+    });
+});
+</script>
+{% endblock javascripts %}
